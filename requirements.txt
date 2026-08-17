@@ -1,0 +1,9 @@
+requests
+PyGithub
+python-dotenv
+click
+rich
+chromadb
+tree-sitter
+sentence-transformers
+groq
