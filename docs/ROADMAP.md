@@ -1,0 +1,129 @@
+# Apricot Neo: Development Roadmap
+
+This roadmap maps the master product plan ([`docs/neo-aprct-context.md`](file:///C:/Users/hp/Desktop/PAPERS/neuropole/apricot-neo/docs/neo-aprct-context.md)) against the current codebase state.
+
+---
+
+## 1. Roadmap Overview & Phase Status
+
+```mermaid
+gantt
+    title Apricot Neo Phased Progression
+    dateFormat  YYYY-MM-DD
+    section Phases
+    Phase 0: Baseline & Inception (Current)     :active, p0, 2026-08-01, 2026-08-20
+    Phase 1: Agent Runtime                      :p1, after p0, 30d
+    Phase 2: Repository Brain                   :p2, after p1, 30d
+    Phase 3: Planner                            :p3, after p2, 25d
+    Phase 4: Autonomous Implementation          :p4, after p3, 30d
+    Phase 5: High-Quality Code Review           :p5, after p4, 25d
+    Phase 6: GitHub App Integration             :p6, after p5, 30d
+    Phase 7: Web Application                   :p7, after p6, 35d
+    Phase 8: Autonomous GitHub Engineer         :p8, after p7, 40d
+```
+
+| Phase | Description | Current Status | Prerequisites |
+| :--- | :--- | :--- | :--- |
+| **Phase 0** | Baseline & Cleanup | **IN PROGRESS (Current)** | Repository setup, documentation baseline. |
+| **Phase 1** | Agent Runtime | **PLANNED** | Completion of Phase 0 baseline & packaging. |
+| **Phase 2** | Repository Brain | **PLANNED** | Phase 1 (tool interface & execution loop). |
+| **Phase 3** | Planner | **PLANNED** | Phase 1 (runtime) & Phase 2 (repository queries). |
+| **Phase 4** | Autonomous Implementation | **PLANNED** | Phase 3 (planning & hypothesis testing). |
+| **Phase 5** | High-Quality Code Review | **PLANNED** | Phase 2 (graph/AST) & Phase 3 (evidence engine). |
+| **Phase 6** | GitHub App Integration | **PLANNED** | Phase 4 (autonomous changes) & Phase 5 (review). |
+| **Phase 7** | Web Application | **PLANNED** | Phase 6 (bot webhooks and job queuing). |
+| **Phase 8** | Autonomous GitHub Engineer | **PLANNED** | Full integration of all previous phases. |
+
+---
+
+## 2. Detailed Phase Breakdown
+
+### Phase 0: Baseline and Cleanup (Current Phase)
+* **Objective:** Establish repo structure, packaging, development environment, and authoritative documentation.
+* **Current State:** Repository inspected, documentation initialized in `docs/`.
+* **Immediate Tasks:**
+  * Adopt a standard packaging configuration (`pyproject.toml`).
+  * Establish test harness (`pytest`) and quality tooling (`ruff`, `mypy`).
+  * Initialize `src/apricot/` layout.
+
+---
+
+### Phase 1: Agent Runtime
+* **Objective:** Turn Apricot into a functional, local, tool-using coding agent.
+* **Target Deliverables:**
+  * Core agent ReAct iteration loop.
+  * Tool registry and base tool abstractions.
+  * Essential filesystem tools (`read_file`, `write_file`, `list_files`).
+  * Shell and test execution tools with output truncation guards.
+  * Git inspection tools (`git_status`, `git_diff`, `git_log`).
+  * LLM provider abstraction with `Groq` and `Ollama` integrations.
+* **Prerequisites:** Phase 0.
+
+---
+
+### Phase 2: Repository Brain
+* **Objective:** Provide deep, multi-layered repository intelligence beyond diffs.
+* **Target Deliverables:**
+  * Tree-sitter AST symbol extractor (classes, functions, interfaces, imports).
+  * Dependency relationship and call graph builder.
+  * Semantic vector indexing using ChromaDB and Sentence-Transformers.
+  * Test-to-code mapping and Git history awareness.
+* **Prerequisites:** Phase 1.
+
+---
+
+### Phase 3: Planner
+* **Objective:** Enable structured investigation, hypotheses generation, and replanning.
+* **Target Deliverables:**
+  * Task decomposition and investigation planner.
+  * Dynamic replanning based on intermediate tool findings.
+  * Evidence engine (distinguishing facts, hypotheses, observations, and proofs).
+* **Prerequisites:** Phase 1 & Phase 2.
+
+---
+
+### Phase 4: Autonomous Implementation
+* **Objective:** Enable the agent to locally solve issues and bugs end-to-end.
+* **Target Deliverables:**
+  * Multi-file patch generation and application.
+  * Test reproduction loop (write test → reproduce bug → apply fix → verify).
+  * Self-review pass before finalizing diff.
+* **Prerequisites:** Phase 3.
+
+---
+
+### Phase 5: High-Quality Code Review
+* **Objective:** Deliver deep repository-aware PR reviews with high signal-to-noise ratio.
+* **Target Deliverables:**
+  * Impact analysis and regression detection.
+  * Evidence-backed review comments with verifiable test cases.
+  * Confidence scoring to filter speculative comments.
+* **Prerequisites:** Phase 2 & Phase 3.
+
+---
+
+### Phase 6: GitHub App Integration
+* **Objective:** Transform Apricot into a real GitHub participant / bot.
+* **Target Deliverables:**
+  * GitHub App authentication and webhook handler.
+  * Issue assignment ingestion, PR review triggers, and bot comments.
+  * Automated git branching and PR creation via `PyGithub`.
+* **Prerequisites:** Phase 4 & Phase 5.
+
+---
+
+### Phase 7: Web Application
+* **Objective:** Provide a centralized dashboard and control plane for users.
+* **Target Deliverables:**
+  * Web interface for repository installation, task tracking, and run logs.
+  * Execution state dashboard (showing evidence traces, files changed, test results).
+  * User settings, model routing configs, and autonomy levels (Observe to Autonomous).
+* **Prerequisites:** Phase 6.
+
+---
+
+### Phase 8: Autonomous GitHub Engineer
+* **Objective:** Full autonomous GitHub workflow loop.
+* **Target Deliverables:**
+  * End-to-end autonomous issue handling, implementation, PR submission, and interactive comment addressing.
+* **Prerequisites:** Phases 1 through 7.
