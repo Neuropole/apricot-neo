@@ -1,0 +1,106 @@
+
+
+# Python
+
+
+**pycache**/
+*.py[cod]
+*$py.class
+
+# Virtual environments (important dont change)
+
+venv/
+.env/
+.venv/
+env/
+
+# Distribution / packaging
+
+build/
+dist/
+*.egg-info/
+
+
+# Environment & Secrets
+
+
+.env
+.env.*
+*.env
+
+# API keys / secrets
+
+secrets.json
+*.key
+
+
+# Logs & temp files
+
+
+*.log
+*.tmp
+*.temp
+
+
+# OS files
+
+
+.DS_Store
+Thumbs.db
+
+
+# IDE / Editor
+
+
+.vscode/
+.idea/
+*.swp
+*.swo
+
+
+# Agent-specific 
+
+
+# Cached embeddings (large + regeneratable)
+
+.agent/embeddings/
+
+# Temporary vector DB files
+
+.agent_db/
+
+# Runtime outputs
+
+.agent/tmp/
+.agent/cache/
+
+
+
+# tests/generated/
+
+
+# Coverage & test outputs
+
+
+.coverage
+htmlcov/
+.pytest_cache/
+
+
+# Jupyter / Colab (if used)
+
+
+.ipynb_checkpoints/
+
+
+# Node (if multi-language support later)
+
+
+node_modules/
+
+
+# GitHub Actions artifacts
+
+
+*.tar
+*.zip
