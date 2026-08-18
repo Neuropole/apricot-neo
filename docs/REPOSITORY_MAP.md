@@ -17,15 +17,27 @@ apricot-neo/
 ├── src/                     # Core application source tree
 │   └── apricot/
 │       ├── __init__.py      # Package root and version
-│       ├── agent/           # Agent runtime and execution loop modules
+│       ├── agent/           # Agent runtime loop and execution state tracking
+│       │   ├── __init__.py
+│       │   ├── runtime.py   # ReAct agent loop implementation
+│       │   └── state.py     # AgentState, StepRecord, and ToolExecutionRecord
 │       ├── config/          # Configuration and environment management
-│       ├── github/          # GitHub integration and webhooks
-│       ├── models/          # LLM provider abstractions and data models
-│       ├── repository/      # Repository intelligence, AST parsing, and graph
-│       ├── tools/           # Agent tool definitions and execution registry
+│       ├── github/          # GitHub integration and webhooks (Phase 6)
+│       ├── models/          # LLM provider abstractions and Groq implementation
+│       │   ├── __init__.py
+│       │   ├── base.py      # Universal provider interface and message types
+│       │   └── groq.py      # GroqProvider client implementation
+│       ├── repository/      # Repository intelligence, AST parsing, and graph (Phase 2)
+│       ├── tools/           # Agent tool abstractions and ToolRegistry
+│       │   ├── __init__.py
+│       │   └── base.py      # BaseTool, FunctionTool, ToolRegistry, ToolResult
 │       └── utils/           # Utility functions and common helpers
 ├── tests/                   # Test suite
-│   └── test_smoke.py        # Baseline package import smoke tests
+│   ├── test_smoke.py        # Baseline package import smoke tests
+│   └── unit/                # Unit tests
+│       ├── test_agent.py    # Agent loop and state execution tests
+│       ├── test_models.py   # Model provider abstraction and GroqProvider tests
+│       └── test_tools.py    # Tool registry and contract tests
 └── docs/                    # Architectural and project documentation
     ├── README.md            # Entry point for AI coding agents and human contributors
     ├── ARCHITECTURE.md      # Current vs target system architecture

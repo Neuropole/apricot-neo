@@ -52,37 +52,35 @@ APRICOT NEO AGENT HANDOFF
 ================================================================================
 
 CURRENT SYSTEM:
-- Phase 0 foundation complete.
-- Packaging configured via pyproject.toml with dependencies locked in uv.lock.
-- Clean package skeleton in src/apricot/ with subpackages (agent/, tools/, repository/, models/, github/, config/, utils/).
-- Test suite configured (pytest) with smoke tests passing.
-- Quality gates configured (ruff, strict mypy).
-- Matrix CI workflow setup in .github/workflows/ci.yml and environment template in .env.example.
+- Phase 0 foundation complete (pyproject.toml, uv.lock, CI matrix, .env.example).
+- Phase 1.1 Model Abstraction complete (BaseProvider, GroqProvider, universal Message/ToolCall/ModelResponse).
+- Phase 1.2 Agent Runtime Foundation complete (BaseTool, FunctionTool, ToolRegistry, Agent ReAct loop, AgentState, AgentResult).
+- Comprehensive test suite (33 tests in tests/unit/ and tests/test_smoke.py) passing under pytest, ruff, and strict mypy.
 
 KNOWN GAPS:
-- No Agent Runtime implementation (no LLM loop, tool registry, or provider interface).
+- No built-in workspace tools yet (read_file, write_file, list_files, run_command, git_status, git_diff).
 - No Repository Brain implementation (no AST parsing, symbol indexing, or ChromaDB vector store).
 - No Planner or specialized investigator agents.
 - No CLI or web interfaces.
 
 IMPORTANT FILES:
+- src/apricot/agent/runtime.py: Agent ReAct execution loop.
+- src/apricot/agent/state.py: AgentState, AgentResult, StepRecord.
+- src/apricot/tools/base.py: BaseTool, FunctionTool, ToolRegistry, ToolResult.
+- src/apricot/models/base.py: BaseProvider, Message, ToolCall, ModelResponse.
+- src/apricot/models/groq.py: GroqProvider implementation.
 - pyproject.toml: Packaging metadata, dependency specs, and tool configs.
 - uv.lock: Deterministic dependency lockfile.
-- src/apricot/: Root package tree and namespace skeletons.
-- tests/test_smoke.py: Smoke test suite.
-- .github/workflows/ci.yml: Matrix CI workflow.
-- .env.example: Environment variable template.
-- docs/neo-aprct-context.md: Product master plan.
+- tests/unit/: Unit test suite (test_agent.py, test_models.py, test_tools.py).
 - docs/CURRENT_STATE.md: Exact capability audit.
 - docs/ARCHITECTURE.md: Target architecture blueprints.
-- docs/DECISIONS.md: Recorded ADRs and pending choices.
 - docs/ROADMAP.md: Phased implementation guide.
 
 CURRENT PHASE:
-- Phase 1: Agent Runtime.
+- Phase 1: Agent Runtime (Active).
 
 NEXT RECOMMENDED TASK:
-- Phase 1.1: LLM Provider Abstraction & Client (src/apricot/models/base.py and initial GroqProvider implementation with tests).
+- Phase 1.3: Built-in Coding Tools (implementing filesystem, shell execution, and git inspection tools in src/apricot/tools/ with path sandboxing and unit tests).
 
 UNRESOLVED DECISIONS:
 - Selection of Python build backend / packaging standard (e.g. pyproject.toml with flit/hatchling/setuptools).

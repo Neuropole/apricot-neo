@@ -2,11 +2,14 @@
 
 ## 1. Current Implementation Status
 
-> [!WARNING]
-> **Current Status: NOT YET IMPLEMENTED**  
-> There is currently **no active agent runtime, prompt engine, or LLM execution loop** in the repository.
+> [!NOTE]
+> **Current Status: RUNTIME FOUNDATION IMPLEMENTED (Phase 1.1 & 1.2 Complete)**  
+> The core provider abstraction ([`src/apricot/models/`](file:///C:/Users/hp/Desktop/PAPERS/neuropole/apricot-neo/src/apricot/models/)), tool registry & contracts ([`src/apricot/tools/`](file:///C:/Users/hp/Desktop/PAPERS/neuropole/apricot-neo/src/apricot/tools/)), and ReAct agent loop with execution audit state ([`src/apricot/agent/`](file:///C:/Users/hp/Desktop/PAPERS/neuropole/apricot-neo/src/apricot/agent/)) are implemented and tested.
 
-The repository currently only defines dependencies associated with an LLM agent ([`groq`](file:///C:/Users/hp/Desktop/PAPERS/neuropole/apricot-neo/requirements.txt#L9), [`click`](file:///C:/Users/hp/Desktop/PAPERS/neuropole/apricot-neo/requirements.txt#L4), [`rich`](file:///C:/Users/hp/Desktop/PAPERS/neuropole/apricot-neo/requirements.txt#L5), [`python-dotenv`](file:///C:/Users/hp/Desktop/PAPERS/neuropole/apricot-neo/requirements.txt#L3)), but contains zero Python source code.
+The agent runtime features:
+* **Universal Provider Interface:** Abstract `BaseProvider` with `GroqProvider` supporting function calling and structured messages.
+* **Tool Abstraction:** `BaseTool`, `FunctionTool`, and `ToolRegistry` with duplicate protection, JSON schema generation, and safe execution dispatch.
+* **ReAct Agent Loop:** `Agent` executes multi-step model → tool → model interactions with max-iteration guards, error resilience, and durable state tracking via `AgentState`.
 
 ---
 
