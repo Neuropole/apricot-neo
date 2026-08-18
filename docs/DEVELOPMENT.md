@@ -28,10 +28,16 @@ python -m venv .venv
 
 ### 2.2 Installing Dependencies
 
-Install current baseline dependencies:
+Using `uv` (recommended):
+```bash
+# Sync all runtime and dev dependencies
+uv sync
+```
+
+Or using standard `pip`:
 ```bash
 pip install --upgrade pip
-pip install -r requirements.txt
+pip install -e ".[dev]"
 ```
 
 ### 2.3 Environment Configuration
@@ -51,7 +57,7 @@ APRICOT_LOG_LEVEL=INFO
 ## 3. Running Locally
 
 > [!NOTE]
-> Currently, the repository is in **Phase 0 (Greenfield)** and contains no CLI or server entry points. Running the project will become available once Phase 1 (`src/apricot/cli.py`) is implemented.
+> Currently, the repository is in **Phase 0.5 (Foundation Skeleton)** and contains no CLI or server entry points. Running the project will become available once Phase 1 (`src/apricot/cli.py` or agent CLI) is implemented.
 
 Target local execution command (Phase 1):
 ```bash
@@ -60,13 +66,11 @@ python -m apricot.cli --help
 
 ---
 
-## 4. Testing & Code Quality (Recommended Setup)
-
-While the repository does not yet include testing configurations, future agents and contributors should standardize on:
+## 4. Testing & Code Quality
 
 * **Testing:** `pytest`
   ```bash
-  pytest tests/
+  pytest
   ```
 * **Linting & Formatting:** `ruff`
   ```bash
@@ -75,17 +79,14 @@ While the repository does not yet include testing configurations, future agents 
   ```
 * **Type Checking:** `mypy`
   ```bash
-  mypy src/
+  mypy
   ```
 
 ---
 
-## 5. Known Development Issues & Technical Notes
+## 5. Technical Notes & Conventions
 
-1. **Unpinned Dependencies in `requirements.txt`:**
-   * Rapidly evolving packages (`chromadb`, `tree-sitter`, `sentence-transformers`) may introduce breaking changes on unpinned installs.
-   * *Recommendation:* Adopt `pyproject.toml` or lockfiles (`uv.lock` or `pip-tools`) during Phase 0 stabilization.
-2. **Tree-Sitter Language Grammars:**
-   * In newer `tree-sitter` versions (0.22+), language grammar packages are separate wheels (e.g. `tree-sitter-python`, `tree-sitter-typescript`). They must be declared alongside `tree-sitter`.
-3. **No Root Package Installed (`pip install -e .`):**
-   * Without a `pyproject.toml` or `setup.py`, the repository cannot be installed in editable mode.
+1. **Lockfile Management:**
+   * Dependencies are pinned in `uv.lock` via `pyproject.toml`. Update with `uv lock` or `uv add <package>`.
+2. **Tree-Sitter Grammars:**
+   * Explicit language grammar packages (`tree-sitter-python`, `tree-sitter-javascript`, `tree-sitter-typescript`) are managed in `pyproject.toml`.
