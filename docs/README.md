@@ -52,21 +52,26 @@ APRICOT NEO AGENT HANDOFF
 ================================================================================
 
 CURRENT SYSTEM:
-- Repository is in Phase 0 (Greenfield Baseline).
-- No application source code (src/), entry points, or tests exist yet.
-- Dependencies defined in requirements.txt (groq, chromadb, tree-sitter, sentence-transformers, PyGithub, click, rich, python-dotenv).
-- Comprehensive documentation established in docs/.
+- Phase 0 foundation complete.
+- Packaging configured via pyproject.toml with dependencies locked in uv.lock.
+- Clean package skeleton in src/apricot/ with subpackages (agent/, tools/, repository/, models/, github/, config/, utils/).
+- Test suite configured (pytest) with smoke tests passing.
+- Quality gates configured (ruff, strict mypy).
+- Matrix CI workflow setup in .github/workflows/ci.yml and environment template in .env.example.
 
 KNOWN GAPS:
-- No standard Python packaging (pyproject.toml / setup.py missing).
-- No source tree structure (src/apricot/).
-- No Agent Runtime (no LLM loop, tool registry, or provider interface).
-- No Repository Brain (no AST parsing, symbol indexing, or ChromaDB vector store).
-- No test framework (pytest) or quality gates (ruff, mypy).
+- No Agent Runtime implementation (no LLM loop, tool registry, or provider interface).
+- No Repository Brain implementation (no AST parsing, symbol indexing, or ChromaDB vector store).
+- No Planner or specialized investigator agents.
+- No CLI or web interfaces.
 
 IMPORTANT FILES:
-- requirements.txt: Initial dependency declarations.
-- .gitignore: Exclusion rules for cache, .venv, embeddings, and credentials.
+- pyproject.toml: Packaging metadata, dependency specs, and tool configs.
+- uv.lock: Deterministic dependency lockfile.
+- src/apricot/: Root package tree and namespace skeletons.
+- tests/test_smoke.py: Smoke test suite.
+- .github/workflows/ci.yml: Matrix CI workflow.
+- .env.example: Environment variable template.
 - docs/neo-aprct-context.md: Product master plan.
 - docs/CURRENT_STATE.md: Exact capability audit.
 - docs/ARCHITECTURE.md: Target architecture blueprints.
@@ -74,10 +79,10 @@ IMPORTANT FILES:
 - docs/ROADMAP.md: Phased implementation guide.
 
 CURRENT PHASE:
-- Phase 0: Baseline & Inception.
+- Phase 1: Agent Runtime.
 
 NEXT RECOMMENDED TASK:
-- Establish Phase 0 Foundation: Setup modern packaging (`pyproject.toml`), configure development/test dependencies (`pytest`, `ruff`, `mypy`), and initialize the `src/apricot` package skeleton.
+- Phase 1.1: LLM Provider Abstraction & Client (src/apricot/models/base.py and initial GroqProvider implementation with tests).
 
 UNRESOLVED DECISIONS:
 - Selection of Python build backend / packaging standard (e.g. pyproject.toml with flit/hatchling/setuptools).

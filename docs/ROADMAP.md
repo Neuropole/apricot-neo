@@ -11,8 +11,8 @@ gantt
     title Apricot Neo Phased Progression
     dateFormat  YYYY-MM-DD
     section Phases
-    Phase 0: Baseline & Inception (Current)     :active, p0, 2026-08-01, 2026-08-20
-    Phase 1: Agent Runtime                      :p1, after p0, 30d
+    Phase 0: Baseline & Inception (Done)        :done, p0, 2026-08-01, 2026-08-18
+    Phase 1: Agent Runtime (Active)             :active, p1, 2026-08-18, 30d
     Phase 2: Repository Brain                   :p2, after p1, 30d
     Phase 3: Planner                            :p3, after p2, 25d
     Phase 4: Autonomous Implementation          :p4, after p3, 30d
@@ -24,8 +24,8 @@ gantt
 
 | Phase | Description | Current Status | Prerequisites |
 | :--- | :--- | :--- | :--- |
-| **Phase 0** | Baseline & Cleanup | **IN PROGRESS (Current)** | Repository setup, documentation baseline. |
-| **Phase 1** | Agent Runtime | **PLANNED** | Completion of Phase 0 baseline & packaging. |
+| **Phase 0** | Baseline & Cleanup | **COMPLETED** | Repository setup, packaging, CI/CD, documentation baseline. |
+| **Phase 1** | Agent Runtime | **ACTIVE / NEXT** | Completion of Phase 0 baseline & packaging. |
 | **Phase 2** | Repository Brain | **PLANNED** | Phase 1 (tool interface & execution loop). |
 | **Phase 3** | Planner | **PLANNED** | Phase 1 (runtime) & Phase 2 (repository queries). |
 | **Phase 4** | Autonomous Implementation | **PLANNED** | Phase 3 (planning & hypothesis testing). |
@@ -38,17 +38,20 @@ gantt
 
 ## 2. Detailed Phase Breakdown
 
-### Phase 0: Baseline and Cleanup (Current Phase)
+### Phase 0: Baseline and Cleanup (COMPLETED)
 * **Objective:** Establish repo structure, packaging, development environment, and authoritative documentation.
-* **Current State:** Repository inspected, documentation initialized in `docs/`.
-* **Immediate Tasks:**
-  * Adopt a standard packaging configuration (`pyproject.toml`).
-  * Establish test harness (`pytest`) and quality tooling (`ruff`, `mypy`).
-  * Initialize `src/apricot/` layout.
+* **Completed Deliverables:**
+  * Authoritative architecture, state, decisions, and roadmap documentation in `docs/`.
+  * Standard Python packaging via `pyproject.toml` and deterministic locking via `uv.lock`.
+  * Minimal package skeleton (`src/apricot/` with 7 core subpackage namespaces).
+  * Smoke test suite (`tests/test_smoke.py`) configured with `pytest`.
+  * Strict code quality tooling (`ruff` and `mypy`).
+  * Environment variable template (`.env.example`).
+  * Automated GitHub Actions CI workflow (`.github/workflows/ci.yml`).
 
 ---
 
-### Phase 1: Agent Runtime
+### Phase 1: Agent Runtime (Active Focus)
 * **Objective:** Turn Apricot into a functional, local, tool-using coding agent.
 * **Target Deliverables:**
   * Core agent ReAct iteration loop.
