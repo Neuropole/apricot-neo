@@ -55,10 +55,10 @@ CURRENT SYSTEM:
 - Phase 0 foundation complete (pyproject.toml, uv.lock, CI matrix, .env.example).
 - Phase 1.1 Model Abstraction complete (BaseProvider, GroqProvider, universal Message/ToolCall/ModelResponse).
 - Phase 1.2 Agent Runtime Foundation complete (BaseTool, FunctionTool, ToolRegistry, Agent ReAct loop, AgentState, AgentResult).
+- Phase 1.3 Built-in Coding Tools complete (repository + git inspection tools).
 - Comprehensive test suite (33 tests in tests/unit/ and tests/test_smoke.py) passing under pytest, ruff, and strict mypy.
 
 KNOWN GAPS:
-- No built-in workspace tools yet (read_file, write_file, list_files, run_command, git_status, git_diff).
 - No Repository Brain implementation (no AST parsing, symbol indexing, or ChromaDB vector store).
 - No Planner or specialized investigator agents.
 - No CLI or web interfaces.
@@ -67,6 +67,8 @@ IMPORTANT FILES:
 - src/apricot/agent/runtime.py: Agent ReAct execution loop.
 - src/apricot/agent/state.py: AgentState, AgentResult, StepRecord.
 - src/apricot/tools/base.py: BaseTool, FunctionTool, ToolRegistry, ToolResult.
+- src/apricot/tools/repository_tools.py: list_files/read_file/search_text/search_code with repo sandboxing.
+- src/apricot/tools/git_tools.py: git_status/git_diff/git_log/git_show with safe subprocess handling.
 - src/apricot/models/base.py: BaseProvider, Message, ToolCall, ModelResponse.
 - src/apricot/models/groq.py: GroqProvider implementation.
 - pyproject.toml: Packaging metadata, dependency specs, and tool configs.
@@ -77,10 +79,10 @@ IMPORTANT FILES:
 - docs/ROADMAP.md: Phased implementation guide.
 
 CURRENT PHASE:
-- Phase 1: Agent Runtime (Active).
+- Phase 1: Agent Runtime + Built-in Coding Tools (Active).
 
 NEXT RECOMMENDED TASK:
-- Phase 1.3: Built-in Coding Tools (implementing filesystem, shell execution, and git inspection tools in src/apricot/tools/ with path sandboxing and unit tests).
+- Phase 2: Repository Brain (AST/symbol extraction, indexing, and relationship graph).
 
 UNRESOLVED DECISIONS:
 - Selection of Python build backend / packaging standard (e.g. pyproject.toml with flit/hatchling/setuptools).
