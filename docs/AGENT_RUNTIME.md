@@ -3,7 +3,7 @@
 ## 1. Current Implementation Status
 
 > [!NOTE]
-> **Current Status: RUNTIME FOUNDATION IMPLEMENTED (Phase 1.1 & 1.2 Complete)**  
+> **Current Status: PHASE 1 COMPLETE (Phase 1.1, 1.2 & 1.3 Complete)**  
 > The core provider abstraction ([`src/apricot/models/`](file:///C:/Users/hp/Desktop/PAPERS/neuropole/apricot-neo/src/apricot/models/)), tool registry & contracts ([`src/apricot/tools/`](file:///C:/Users/hp/Desktop/PAPERS/neuropole/apricot-neo/src/apricot/tools/)), and ReAct agent loop with execution audit state ([`src/apricot/agent/`](file:///C:/Users/hp/Desktop/PAPERS/neuropole/apricot-neo/src/apricot/agent/)) are implemented and tested.
 
 The agent runtime features:
@@ -54,8 +54,9 @@ sequenceDiagram
 2. **Tool Registry & Execution Subsystem:**
    * Strict parameter validation and schema generation.
    * Standardized tool categories:
-     * **Filesystem Tools:** `read_file`, `write_file`, `list_directory`, `file_search`.
-     * **Git Tools:** `git_status`, `git_diff`, `git_log`, `git_blame`.
+     * **Filesystem Tools:** `list_files`, `read_file`, `search_text`, `search_code`.
+     * **Repository Tools:** `list_files`, `read_file`, `search_text`, `search_code`, scoped to an explicit repository root.
+     * **Git Tools:** `git_status`, `git_diff`, `git_log`, `git_show`, using captured no-shell subprocesses.
      * **Execution Tools:** `run_command`, `run_tests` (with timeout and output truncation guards).
 
 3. **Context Budgeting & Management:**
