@@ -2,9 +2,9 @@
 
 ## 1. Executive Summary
 
-Apricot Neo has **completed Phase 0 (Baseline & Foundation)**. The repository contains a standard `pyproject.toml` packaging setup, `uv.lock`, minimal package skeleton in `src/apricot/`, smoke test suite in `tests/`, strict quality gates (`ruff`, `mypy`), environment template (`.env.example`), and CI automation (`.github/workflows/ci.yml`). 
+Apricot Neo has **completed Phase 1 (Agent Runtime)**, including Phase 1.3 repository and Git inspection tools. The repository contains a standard `pyproject.toml` packaging setup, `uv.lock`, package code in `src/apricot/`, tests in `tests/`, strict quality gates (`ruff`, `mypy`), environment template (`.env.example`), and CI automation (`.github/workflows/ci.yml`).
 
-The project is now entering **Phase 1: Agent Runtime**.
+The project is now ready for **Phase 2: Repository Brain**.
 
 ---
 
@@ -22,7 +22,7 @@ The project is now entering **Phase 1: Agent Runtime**.
 | **Tool System & Registry** | Working | [`src/apricot/tools/base.py`](file:///C:/Users/hp/Desktop/PAPERS/neuropole/apricot-neo/src/apricot/tools/base.py) (`BaseTool`, `FunctionTool`, `ToolRegistry`, `ToolResult`). |
 | **Agent Runtime Loop & State** | Working | [`src/apricot/agent/runtime.py`](file:///C:/Users/hp/Desktop/PAPERS/neuropole/apricot-neo/src/apricot/agent/runtime.py) & [`src/apricot/agent/state.py`](file:///C:/Users/hp/Desktop/PAPERS/neuropole/apricot-neo/src/apricot/agent/state.py). |
 | **Repository Brain / Indexing** | **Does Not Exist** | No AST parsing, graph generation, or ChromaDB indexing logic implemented yet. |
-| **Built-in Coding Tools (FS/Git/Exec)** | **Does Not Exist** | Real filesystem/shell/git tools to be added in Phase 1.3. |
+| **Built-in Repository & Git Tools** | **Working** | Root-scoped repository tools (`list_files`, `read_file`, `search_text`, `search_code`) and safe no-shell Git tools (`git_status`, `git_diff`, `git_log`, `git_show`) with bounded output and failure handling. |
 | **GitHub Integration / Webhooks** | **Does Not Exist** | No GitHub App, webhook endpoints, or PyGithub API wrappers written yet. |
 | **CLI / Interface** | **Does Not Exist** | No CLI scripts (e.g. using `click` or `rich`) created yet. |
 
@@ -38,12 +38,12 @@ The project is now entering **Phase 1: Agent Runtime**.
 ---
 
 ## 4. What Partially Works
-* **Agent Capabilities:** The core agent loop and tool dispatch work, but currently operate on test/dummy tools until built-in filesystem, shell, and git tools are implemented in Phase 1.3.
+* **Agent Capabilities:** The core agent loop and tool dispatch work with real repository + Git inspection tools. Execution tools (`run_command`, `run_tests`, `run_linter`, etc.) and write tools (`write_file`) are not implemented yet.
 
 ---
 
 ## 5. What Does Not Exist
-* **No Built-in Tools:** Real filesystem (`read_file`, `write_file`, `list_files`), git (`git_status`, `git_diff`), and execution (`run_command`) tools.
+* **No Write/Execution Tools:** `write_file`, command execution (`run_command`), and other runtime execution helpers are not implemented yet.
 * **No Repository Brain:** No code parser, relationship graph, or ChromaDB vector store wrapper.
 * **No Planner:** No reasoning, replanning, or specialized investigator agents.
 * **No Review / Implementation Engine:** No diff generation, autonomous editing, or self-review engine.
