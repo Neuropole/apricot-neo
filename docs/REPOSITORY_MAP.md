@@ -30,7 +30,9 @@ apricot-neo/
 │       ├── repository/      # Repository intelligence, AST parsing, and graph (Phase 2)
 │       ├── tools/           # Agent tool abstractions and ToolRegistry
 │       │   ├── __init__.py
-│       │   └── base.py      # BaseTool, FunctionTool, ToolRegistry, ToolResult
+│       │   ├── repository_tools.py # list_files/read_file/search_text/search_code
+│       │   ├── git_tools.py         # git_status/git_diff/git_log/git_show
+│       │   └── base.py             # BaseTool, FunctionTool, ToolRegistry, ToolResult
 │       └── utils/           # Utility functions and common helpers
 ├── tests/                   # Test suite
 │   ├── test_smoke.py        # Baseline package import smoke tests
