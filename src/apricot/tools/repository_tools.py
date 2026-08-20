@@ -539,9 +539,7 @@ class SearchTextTool(_BaseSearchTool):
 
         case_sensitive_raw = kwargs.get("case_sensitive", False)
         case_sensitive = (
-            case_sensitive_raw
-            if isinstance(case_sensitive_raw, bool)
-            else bool(case_sensitive_raw)
+            case_sensitive_raw if isinstance(case_sensitive_raw, bool) else bool(case_sensitive_raw)
         )
 
         try:
@@ -708,9 +706,7 @@ class SearchCodeTool(_BaseSearchTool):
 
         case_sensitive_raw = kwargs.get("case_sensitive", False)
         case_sensitive = (
-            case_sensitive_raw
-            if isinstance(case_sensitive_raw, bool)
-            else bool(case_sensitive_raw)
+            case_sensitive_raw if isinstance(case_sensitive_raw, bool) else bool(case_sensitive_raw)
         )
 
         use_regex_raw = kwargs.get("use_regex", False)

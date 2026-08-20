@@ -54,8 +54,7 @@ def repo_with_files(tmp_path: Path) -> Path:
     (repo / ".git").mkdir()
 
     (repo / "src" / "example.py").write_text(
-        "def add(a, b):\n"
-        "    return a + b\n",
+        "def add(a, b):\n    return a + b\n",
         encoding="utf-8",
     )
     (repo / "README.md").write_text("hello world\n", encoding="utf-8")
