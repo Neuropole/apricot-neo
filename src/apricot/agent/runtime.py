@@ -64,6 +64,7 @@ class Agent:
             )
         else:
             state.status = AgentStatus.RUNNING
+            state.error = None
 
         while state.current_step < self.max_iterations:
             state.current_step += 1

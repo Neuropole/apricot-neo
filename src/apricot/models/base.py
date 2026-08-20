@@ -34,10 +34,16 @@ class ToolCall:
         if raw_arguments:
             try:
                 parsed = json.loads(raw_arguments)
-                if isinstance(parsed, dict):
-                    arguments = parsed
-            except json.JSONDecodeError:
-                pass
+            except json.JSONDecodeError as exc:
+                raise ValueError(
+                    f"Invalid JSON in tool call arguments for '{name}': {raw_arguments}"
+                ) from exc
+            if not isinstance(parsed, dict):
+                val_type = type(parsed).__name__
+                raise ValueError(
+                    f"Tool call arguments for '{name}' must be a JSON object, got {val_type}"
+                )
+            arguments = parsed
         return cls(id=id, name=name, arguments=arguments, raw_arguments=raw_arguments)
 
 

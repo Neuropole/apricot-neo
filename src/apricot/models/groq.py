@@ -198,5 +198,5 @@ class GroqProvider(BaseProvider):
                 usage=usage,
                 model=raw_response.model,
             )
-        except (IndexError, AttributeError) as exc:
+        except (IndexError, AttributeError, ValueError) as exc:
             raise ModelResponseError(f"Malformed response from Groq API: {exc}") from exc
