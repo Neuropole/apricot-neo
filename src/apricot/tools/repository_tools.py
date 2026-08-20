@@ -13,7 +13,7 @@ import re
 import stat
 from collections.abc import Iterable
 from dataclasses import dataclass
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any
 
 from apricot.tools.base import BaseTool, ToolResult
@@ -65,6 +65,7 @@ EXCLUDED_SUFFIXES: set[str] = {
     ".webp",
     ".exe",
     ".msi",
+    ".env",
 }
 
 
@@ -96,8 +97,7 @@ CODE_EXTENSIONS: set[str] = {
     ".yaml",
     ".toml",
     ".json",
-    ".env",
-    ".mdown",
+    ".md",
 }
 
 
@@ -137,7 +137,14 @@ class RepoSandbox:
         parts = Path(rel_path).parts
         if any(p in ("..",) for p in parts):
             raise RepoSandboxError("Path traversal outside repository is not allowed")
-        return rel_path.replace("\\", "/").lstrip("./")
+        posix = rel_path.replace("\\", "/")
+        norm = PurePosixPath(posix)
+        if norm.is_absolute():
+            raise RepoSandboxError("Absolute paths are not allowed")
+        normalized_str = norm.as_posix()
+        if normalized_str == ".":
+            return ""
+        return normalized_str
 
     def resolve_within_repo(self, rel_path: str) -> _ResolvedPath:
         """Resolve a relative path (inside the repo) with traversal protection."""
@@ -159,7 +166,10 @@ class RepoSandbox:
     def _is_excluded_dir(self, dir_name: str) -> bool:
         return dir_name in EXCLUDED_DIRS
 
-    def _is_excluded_suffix(self, file_name: str) -> bool:
+    def _is_excluded_file(self, file_name: str) -> bool:
+        fn_lower = file_name.lower()
+        if fn_lower == ".env" or fn_lower.startswith(".env."):
+            return True
         suffix = Path(file_name).suffix.lower()
         return suffix in EXCLUDED_SUFFIXES
 
@@ -170,7 +180,7 @@ class RepoSandbox:
         except ValueError:
             return True
         return any(part in EXCLUDED_DIRS for part in rel_parts) or (
-            bool(rel_parts) and self._is_excluded_suffix(rel_parts[-1])
+            bool(rel_parts) and self._is_excluded_file(rel_parts[-1])
         )
 
     def iter_files(
@@ -194,7 +204,7 @@ class RepoSandbox:
             if code_only:
                 if start_abs.suffix.lower() not in CODE_EXTENSIONS:
                     return
-            if self._is_excluded_suffix(start_abs.name):
+            if self._is_excluded_file(start_abs.name):
                 return
             # Prevent symlink escape: only yield if the resolved target stays within repo_root.
             try:
@@ -204,6 +214,7 @@ class RepoSandbox:
             yield start_abs
             return
 
+        yielded = 0
         # Directory walking (streaming, no large memory loads).
         if recursive:
             for root, dirs, files in os.walk(start_abs):
@@ -211,7 +222,7 @@ class RepoSandbox:
                 dirs[:] = [d for d in dirs if not self._is_excluded_dir(d)]
                 for fn in files:
                     path_abs = Path(root) / fn
-                    if self._is_excluded_suffix(fn):
+                    if self._is_excluded_file(fn):
                         continue
                     if code_only and path_abs.suffix.lower() not in CODE_EXTENSIONS:
                         continue
@@ -221,6 +232,9 @@ class RepoSandbox:
                     except ValueError:
                         continue
                     yield path_abs
+                    yielded += 1
+                    if yielded >= max_files:
+                        return
         else:
             try:
                 for child in start_abs.iterdir():
@@ -228,7 +242,7 @@ class RepoSandbox:
                         if self._is_excluded_dir(child.name):
                             continue
                         continue
-                    if self._is_excluded_suffix(child.name):
+                    if self._is_excluded_file(child.name):
                         continue
                     if code_only and child.suffix.lower() not in CODE_EXTENSIONS:
                         continue
@@ -238,6 +252,9 @@ class RepoSandbox:
                     except ValueError:
                         continue
                     yield child
+                    yielded += 1
+                    if yielded >= max_files:
+                        return
             except OSError:
                 return
 
@@ -436,7 +453,11 @@ class ReadFileTool(BaseTool):
             return ToolResult.failure(error="Requested path is not a file")
 
         # Reject special devices.
-        mode = abs_path.stat().st_mode
+        try:
+            mode = abs_path.stat().st_mode
+        except OSError as exc:
+            return ToolResult.failure(error=f"Failed to access file: {exc}")
+
         if stat.S_ISDIR(mode) or stat.S_ISCHR(mode) or stat.S_ISBLK(mode) or stat.S_ISFIFO(mode):
             return ToolResult.failure(error="Requested path is not a regular file")
 
@@ -483,219 +504,13 @@ class _BaseSearchTool(BaseTool):
                 break
         return files
 
-
-class SearchTextTool(_BaseSearchTool):
-    """Substring search across text files in the repository."""
-
-    def __init__(self, repo_root: str | Path) -> None:
-        super().__init__(repo_root)
-
-    @property
-    def name(self) -> str:
-        return "search_text"
-
-    @property
-    def description(self) -> str:
-        return "Search for a text substring inside UTF-8 files under the repository sandbox."
-
-    @property
-    def parameters(self) -> dict[str, Any]:
-        return {
-            "type": "object",
-            "properties": {
-                "query": {"type": "string", "description": "Substring to search for."},
-                "path": {"type": "string", "description": "Repo-relative dir/file; '' = root."},
-                "case_sensitive": {
-                    "type": "boolean",
-                    "description": "Case sensitive search.",
-                },
-                "max_results": {
-                    "type": "integer",
-                    "description": "Max matches to return.",
-                },
-                "max_files": {
-                    "type": "integer",
-                    "description": "Max files to scan.",
-                },
-                "max_file_bytes": {
-                    "type": "integer",
-                    "description": "Skip files larger than this size.",
-                },
-                "max_preview_chars": {
-                    "type": "integer",
-                    "description": "Preview chars.",
-                },
-            },
-        }
-
-    def execute(self, **kwargs: Any) -> ToolResult:
-        query_raw = kwargs.get("query")
-        if not isinstance(query_raw, str):
-            return ToolResult.failure(error="query must be a string")
-        query = query_raw
-
-        path_raw = kwargs.get("path", "")
-        path = path_raw if isinstance(path_raw, str) else str(path_raw)
-
-        case_sensitive_raw = kwargs.get("case_sensitive", False)
-        case_sensitive = (
-            case_sensitive_raw if isinstance(case_sensitive_raw, bool) else bool(case_sensitive_raw)
-        )
-
-        try:
-            max_results = int(kwargs.get("max_results", 50))
-            max_files = int(kwargs.get("max_files", 500))
-            max_file_bytes = int(kwargs.get("max_file_bytes", 1_500_000))
-            max_preview_chars = int(kwargs.get("max_preview_chars", 220))
-        except (TypeError, ValueError):
-            return ToolResult.failure(error="numeric search parameters must be integers")
-        if min(max_results, max_files, max_file_bytes, max_preview_chars) <= 0:
-            return ToolResult.failure(error="search limits must be greater than zero")
-
-        valid_query = self._validate_query(query)
-        if valid_query is None:
-            return ToolResult.failure(error="query must be a non-empty string")
-
-        try:
-            resolved = self._sandbox.resolve_within_repo(path)
-        except RepoSandboxError as exc:
-            return ToolResult.failure(error=str(exc))
-
-        start_abs = resolved.abs_path
-        if self._sandbox.is_excluded_path(start_abs):
-            return ToolResult.failure(error="Requested path is excluded from repository inspection")
-        if not start_abs.exists():
-            return ToolResult.failure(error="Requested search path does not exist")
-
-        files = self._iter_search_files(
-            start_abs, recursive=True, max_files=max_files, code_only=False
-        )
-
-        q_cmp = valid_query if case_sensitive else valid_query.lower()
-        matches: list[dict[str, Any]] = []
-
-        skipped_binary = 0
-        scanned_files = 0
-        for f_abs in files:
-            try:
-                size = f_abs.stat().st_size
-            except OSError:
-                continue
-            if size > max_file_bytes:
-                continue
-
-            try:
-                # Quick binary check using a small sample.
-                with f_abs.open("rb") as bf:
-                    sample = bf.read(4096)
-                if _looks_like_binary(sample):
-                    skipped_binary += 1
-                    continue
-            except OSError:
-                continue
-
-            scanned_files += 1
-            try:
-                with f_abs.open("rb") as f:
-                    for idx, line in enumerate(f, start=1):
-                        try:
-                            decoded = line.decode("utf-8", errors="replace")
-                        except Exception:
-                            continue
-                        hay = decoded if case_sensitive else decoded.lower()
-                        if q_cmp in hay:
-                            try:
-                                rel = f_abs.relative_to(self._sandbox.repo_root).as_posix()
-                            except ValueError:
-                                rel = str(f_abs)
-                            preview = decoded.strip().replace("\t", " ")
-                            if len(preview) > max_preview_chars:
-                                preview = preview[:max_preview_chars] + "…"
-                            matches.append(
-                                {
-                                    "path": rel,
-                                    "line_number": idx,
-                                    "preview": preview,
-                                }
-                            )
-                            if len(matches) >= max_results:
-                                break
-                        if len(matches) >= max_results:
-                            break
-            except OSError:
-                continue
-
-            if len(matches) >= max_results:
-                break
-
-        payload = {
-            "type": "search_text",
-            "query": valid_query,
-            "requested_path": path,
-            "case_sensitive": case_sensitive,
-            "matches": matches,
-            "stats": {
-                "files_scanned": scanned_files,
-                "files_considered": len(files),
-                "binary_skipped": skipped_binary,
-                "max_results": max_results,
-            },
-        }
-        return ToolResult.ok(
-            output=json.dumps(payload, ensure_ascii=False),
-            metadata={"matches": len(matches)},
-        )
-
-
-class SearchCodeTool(_BaseSearchTool):
-    """Substring/regex search restricted to likely code files."""
-
-    def __init__(self, repo_root: str | Path) -> None:
-        super().__init__(repo_root)
-
-    @property
-    def name(self) -> str:
-        return "search_code"
-
-    @property
-    def description(self) -> str:
-        return "Search in likely code files under the repository sandbox."
-
-    @property
-    def parameters(self) -> dict[str, Any]:
-        return {
-            "type": "object",
-            "properties": {
-                "query": {"type": "string", "description": "Substring or regex pattern to search."},
-                "path": {"type": "string", "description": "Repo-relative dir/file; '' = root."},
-                "case_sensitive": {
-                    "type": "boolean",
-                    "description": "Case sensitive matching.",
-                },
-                "max_results": {
-                    "type": "integer",
-                    "description": "Max matches to return.",
-                },
-                "max_files": {
-                    "type": "integer",
-                    "description": "Max files to scan.",
-                },
-                "max_file_bytes": {
-                    "type": "integer",
-                    "description": "Skip files larger than this size.",
-                },
-                "max_preview_chars": {
-                    "type": "integer",
-                    "description": "Preview chars.",
-                },
-                "use_regex": {
-                    "type": "boolean",
-                    "description": "Treat query as a regex pattern.",
-                },
-            },
-        }
-
-    def execute(self, **kwargs: Any) -> ToolResult:
+    def _execute_search(
+        self,
+        *,
+        tool_type: str,
+        code_only: bool,
+        kwargs: dict[str, Any],
+    ) -> ToolResult:
         query_raw = kwargs.get("query")
         if not isinstance(query_raw, str):
             return ToolResult.failure(error="query must be a string")
@@ -726,6 +541,14 @@ class SearchCodeTool(_BaseSearchTool):
         if valid_query is None:
             return ToolResult.failure(error="query must be a non-empty string")
 
+        if use_regex:
+            if len(valid_query) > 500:
+                return ToolResult.failure(
+                    error="Regex pattern exceeds maximum length of 500 characters"
+                )
+            max_files = min(max_files, 500)
+            max_file_bytes = min(max_file_bytes, 1_500_000)
+
         try:
             resolved = self._sandbox.resolve_within_repo(path)
         except RepoSandboxError as exc:
@@ -747,7 +570,7 @@ class SearchCodeTool(_BaseSearchTool):
         q_cmp = valid_query if case_sensitive else valid_query.lower()
 
         files = self._iter_search_files(
-            start_abs, recursive=True, max_files=max_files, code_only=True
+            start_abs, recursive=True, max_files=max_files, code_only=code_only
         )
 
         matches: list[dict[str, Any]] = []
@@ -810,24 +633,119 @@ class SearchCodeTool(_BaseSearchTool):
             if len(matches) >= max_results:
                 break
 
-        payload = {
-            "type": "search_code",
+        payload: dict[str, Any] = {
+            "type": tool_type,
             "query": valid_query,
             "requested_path": path,
             "case_sensitive": case_sensitive,
-            "use_regex": use_regex,
-            "matches": matches,
-            "stats": {
-                "files_scanned": scanned_files,
-                "files_considered": len(files),
-                "binary_skipped": skipped_binary,
-                "max_results": max_results,
-            },
+        }
+        if tool_type == "search_code":
+            payload["use_regex"] = use_regex
+        payload["matches"] = matches
+        payload["stats"] = {
+            "files_scanned": scanned_files,
+            "files_considered": len(files),
+            "binary_skipped": skipped_binary,
+            "max_results": max_results,
         }
         return ToolResult.ok(
             output=json.dumps(payload, ensure_ascii=False),
             metadata={"matches": len(matches)},
         )
+
+
+class SearchTextTool(_BaseSearchTool):
+    """Substring search across text files in the repository."""
+
+    @property
+    def name(self) -> str:
+        return "search_text"
+
+    @property
+    def description(self) -> str:
+        return "Search for a text substring inside UTF-8 files under the repository sandbox."
+
+    @property
+    def parameters(self) -> dict[str, Any]:
+        return {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "description": "Substring to search for."},
+                "path": {"type": "string", "description": "Repo-relative dir/file; '' = root."},
+                "case_sensitive": {
+                    "type": "boolean",
+                    "description": "Case sensitive search.",
+                },
+                "max_results": {
+                    "type": "integer",
+                    "description": "Max matches to return.",
+                },
+                "max_files": {
+                    "type": "integer",
+                    "description": "Max files to scan.",
+                },
+                "max_file_bytes": {
+                    "type": "integer",
+                    "description": "Skip files larger than this size.",
+                },
+                "max_preview_chars": {
+                    "type": "integer",
+                    "description": "Preview chars.",
+                },
+            },
+        }
+
+    def execute(self, **kwargs: Any) -> ToolResult:
+        return self._execute_search(tool_type="search_text", code_only=False, kwargs=kwargs)
+
+
+class SearchCodeTool(_BaseSearchTool):
+    """Substring/regex search restricted to likely code files."""
+
+    @property
+    def name(self) -> str:
+        return "search_code"
+
+    @property
+    def description(self) -> str:
+        return "Search in likely code files under the repository sandbox."
+
+    @property
+    def parameters(self) -> dict[str, Any]:
+        return {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "description": "Substring or regex pattern to search."},
+                "path": {"type": "string", "description": "Repo-relative dir/file; '' = root."},
+                "case_sensitive": {
+                    "type": "boolean",
+                    "description": "Case sensitive matching.",
+                },
+                "max_results": {
+                    "type": "integer",
+                    "description": "Max matches to return.",
+                },
+                "max_files": {
+                    "type": "integer",
+                    "description": "Max files to scan.",
+                },
+                "max_file_bytes": {
+                    "type": "integer",
+                    "description": "Skip files larger than this size.",
+                },
+                "max_preview_chars": {
+                    "type": "integer",
+                    "description": "Preview chars.",
+                },
+                "use_regex": {
+                    "type": "boolean",
+                    "description": "Treat query as a regex pattern.",
+                },
+            },
+        }
+
+    def execute(self, **kwargs: Any) -> ToolResult:
+        return self._execute_search(tool_type="search_code", code_only=True, kwargs=kwargs)
 
 
 def make_repository_tools(repo_root: str | Path) -> list[BaseTool]:

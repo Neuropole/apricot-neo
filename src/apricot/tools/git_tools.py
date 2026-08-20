@@ -39,6 +39,13 @@ class GitToolBase(BaseTool):
         timeout_s: int = 20,
         max_output_bytes: int = 250_000,
     ) -> _GitRunResult:
+        if not self._repo_root.exists():
+            return _GitRunResult(exit_code=126, stdout="", stderr="repository root does not exist")
+        if not self._repo_root.is_dir():
+            return _GitRunResult(
+                exit_code=126, stdout="", stderr="repository root is not a directory"
+            )
+
         # subprocess.run with list arguments => no shell injection surface.
         try:
             proc = subprocess.run(
@@ -92,6 +99,49 @@ class GitToolBase(BaseTool):
             or "unknown revision" in combined
         )
 
+    def _build_result(
+        self,
+        tool_type: str,
+        run_res: _GitRunResult,
+        *,
+        extra_payload: dict[str, Any] | None = None,
+        extra_metadata: dict[str, Any] | None = None,
+    ) -> ToolResult:
+        payload: dict[str, Any] = {
+            "type": tool_type,
+            "exit_code": run_res.exit_code,
+            "stdout": run_res.stdout,
+            "stderr": run_res.stderr,
+        }
+        if extra_payload:
+            payload.update(extra_payload)
+
+        if run_res.exit_code != 0:
+            err_msg = (
+                "not a git repository"
+                if self._not_a_git_repo_failure(run_res)
+                else f"{tool_type} failed"
+            )
+            metadata: dict[str, Any] = {
+                "exit_code": run_res.exit_code,
+                "stderr": run_res.stderr,
+            }
+            if extra_metadata:
+                metadata.update(extra_metadata)
+            return ToolResult.failure(
+                error=err_msg,
+                output=json.dumps(payload, ensure_ascii=False),
+                metadata=metadata,
+            )
+
+        metadata = {"exit_code": run_res.exit_code}
+        if extra_metadata:
+            metadata.update(extra_metadata)
+        return ToolResult.ok(
+            output=json.dumps(payload, ensure_ascii=False),
+            metadata=metadata,
+        )
+
 
 class GitStatusTool(GitToolBase):
     """Run `git status` in the repository."""
@@ -110,31 +160,7 @@ class GitStatusTool(GitToolBase):
 
     def execute(self, **_: Any) -> ToolResult:
         run_res = self._run_git(["status", "--porcelain=v1", "-b"])
-        if run_res.exit_code != 0:
-            return ToolResult.failure(
-                error="git_status failed",
-                output=json.dumps(
-                    {
-                        "type": "git_status",
-                        "exit_code": run_res.exit_code,
-                        "stdout": run_res.stdout,
-                        "stderr": run_res.stderr,
-                    },
-                    ensure_ascii=False,
-                ),
-                metadata={"exit_code": run_res.exit_code, "stderr": run_res.stderr},
-            )
-
-        payload = {
-            "type": "git_status",
-            "exit_code": run_res.exit_code,
-            "stdout": run_res.stdout,
-            "stderr": run_res.stderr,
-        }
-        return ToolResult.ok(
-            output=json.dumps(payload, ensure_ascii=False),
-            metadata={"exit_code": run_res.exit_code},
-        )
+        return self._build_result("git_status", run_res)
 
 
 class GitDiffTool(GitToolBase):
@@ -170,6 +196,8 @@ class GitDiffTool(GitToolBase):
             max_bytes = int(kwargs.get("max_bytes", 250_000))
         except (TypeError, ValueError):
             return ToolResult.failure(error="max_bytes must be an integer")
+        if max_bytes <= 0:
+            return ToolResult.failure(error="max_bytes must be greater than zero")
 
         args = ["diff"]
         if staged:
@@ -178,31 +206,7 @@ class GitDiffTool(GitToolBase):
             args.extend(["--", path])
 
         run_res = self._run_git(args, max_output_bytes=max_bytes)
-        if run_res.exit_code != 0:
-            return ToolResult.failure(
-                error="git_diff failed",
-                output=json.dumps(
-                    {
-                        "type": "git_diff",
-                        "exit_code": run_res.exit_code,
-                        "stdout": run_res.stdout,
-                        "stderr": run_res.stderr,
-                    },
-                    ensure_ascii=False,
-                ),
-                metadata={"exit_code": run_res.exit_code, "stderr": run_res.stderr},
-            )
-
-        payload = {
-            "type": "git_diff",
-            "exit_code": run_res.exit_code,
-            "stdout": run_res.stdout,
-            "stderr": run_res.stderr,
-        }
-        return ToolResult.ok(
-            output=json.dumps(payload, ensure_ascii=False),
-            metadata={"exit_code": run_res.exit_code},
-        )
+        return self._build_result("git_diff", run_res)
 
 
 class GitLogTool(GitToolBase):
@@ -233,6 +237,10 @@ class GitLogTool(GitToolBase):
             max_bytes = int(kwargs.get("max_bytes", 250_000))
         except (TypeError, ValueError):
             return ToolResult.failure(error="max_count/max_bytes must be integers")
+        if max_count <= 0 or max_bytes <= 0:
+            return ToolResult.failure(error="max_count and max_bytes must be greater than zero")
+        if max_count > 1000:
+            return ToolResult.failure(error="max_count cannot exceed 1000")
 
         path_raw = kwargs.get("path")
         path = path_raw if isinstance(path_raw, str) else None
@@ -252,19 +260,7 @@ class GitLogTool(GitToolBase):
 
         run_res = self._run_git(args, max_output_bytes=max_bytes)
         if run_res.exit_code != 0:
-            return ToolResult.failure(
-                error="git_log failed",
-                output=json.dumps(
-                    {
-                        "type": "git_log",
-                        "exit_code": run_res.exit_code,
-                        "stdout": run_res.stdout,
-                        "stderr": run_res.stderr,
-                    },
-                    ensure_ascii=False,
-                ),
-                metadata={"exit_code": run_res.exit_code, "stderr": run_res.stderr},
-            )
+            return self._build_result("git_log", run_res)
 
         entries: list[dict[str, Any]] = []
         for rec in run_res.stdout.split(sep2):
@@ -316,41 +312,19 @@ class GitShowTool(GitToolBase):
         if not isinstance(rev_raw, str) or not rev_raw.strip():
             return ToolResult.failure(error="rev must be a non-empty string")
         rev = rev_raw.strip()
+        if rev.startswith("-"):
+            return ToolResult.failure(error="rev cannot start with '-'")
 
         max_bytes_raw = kwargs.get("max_bytes", 250_000)
         try:
             max_bytes = int(max_bytes_raw)
         except (TypeError, ValueError):
             return ToolResult.failure(error="max_bytes must be an integer")
+        if max_bytes <= 0:
+            return ToolResult.failure(error="max_bytes must be greater than zero")
 
-        run_res = self._run_git(["show", rev], max_output_bytes=max_bytes)
-        if run_res.exit_code != 0:
-            return ToolResult.failure(
-                error="git_show failed",
-                output=json.dumps(
-                    {
-                        "type": "git_show",
-                        "rev": rev,
-                        "exit_code": run_res.exit_code,
-                        "stdout": run_res.stdout,
-                        "stderr": run_res.stderr,
-                    },
-                    ensure_ascii=False,
-                ),
-                metadata={"exit_code": run_res.exit_code, "stderr": run_res.stderr},
-            )
-
-        payload = {
-            "type": "git_show",
-            "rev": rev,
-            "exit_code": run_res.exit_code,
-            "stdout": run_res.stdout,
-            "stderr": run_res.stderr,
-        }
-        return ToolResult.ok(
-            output=json.dumps(payload, ensure_ascii=False),
-            metadata={"exit_code": run_res.exit_code},
-        )
+        run_res = self._run_git(["show", rev, "--"], max_output_bytes=max_bytes)
+        return self._build_result("git_show", run_res, extra_payload={"rev": rev})
 
 
 def make_git_tools(repo_root: str | Path) -> list[BaseTool]:
