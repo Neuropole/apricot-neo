@@ -12,15 +12,15 @@ The project is now ready for **Phase 2: Repository Brain**.
 
 | System / Capability | Status | Evidence / Notes |
 | :--- | :--- | :--- |
-| **Dependency Declarations & Locking** | Working | [`pyproject.toml`](file:///C:/Users/hp/Desktop/PAPERS/neuropole/apricot-neo/pyproject.toml) and [`uv.lock`](file:///C:/Users/hp/Desktop/PAPERS/neuropole/apricot-neo/uv.lock) define and lock all runtime and dev dependencies. |
-| **Git Configuration** | Working | [`.gitignore`](file:///C:/Users/hp/Desktop/PAPERS/neuropole/apricot-neo/.gitignore) ignores standard Python artifacts, virtual environments, caches, and vector DBs. |
-| **Environment Configuration** | Working | [`.env.example`](file:///C:/Users/hp/Desktop/PAPERS/neuropole/apricot-neo/.env.example) template provided. |
+| **Dependency Declarations & Locking** | Working | [`pyproject.toml`](../pyproject.toml) and [`uv.lock`](../uv.lock) define and lock all runtime and dev dependencies. |
+| **Git Configuration** | Working | [`.gitignore`](../.gitignore) ignores standard Python artifacts, virtual environments, caches, and vector DBs. |
+| **Environment Configuration** | Working | [`.env.example`](../.env.example) template provided. |
 | **Test Suite / Automation** | Working | Unit tests in `tests/unit/` and smoke tests in `tests/` passing under `pytest`. |
 | **Linting & Type Checking** | Working | `ruff` and `mypy` (strict) passing with zero errors. |
-| **CI / CD Pipelines** | Working | [`.github/workflows/ci.yml`](file:///C:/Users/hp/Desktop/PAPERS/neuropole/apricot-neo/.github/workflows/ci.yml) matrix workflow across Python 3.10–3.13. |
-| **LLM Provider Abstraction** | Working | [`src/apricot/models/base.py`](file:///C:/Users/hp/Desktop/PAPERS/neuropole/apricot-neo/src/apricot/models/base.py) & [`src/apricot/models/groq.py`](file:///C:/Users/hp/Desktop/PAPERS/neuropole/apricot-neo/src/apricot/models/groq.py). |
-| **Tool System & Registry** | Working | [`src/apricot/tools/base.py`](file:///C:/Users/hp/Desktop/PAPERS/neuropole/apricot-neo/src/apricot/tools/base.py) (`BaseTool`, `FunctionTool`, `ToolRegistry`, `ToolResult`). |
-| **Agent Runtime Loop & State** | Working | [`src/apricot/agent/runtime.py`](file:///C:/Users/hp/Desktop/PAPERS/neuropole/apricot-neo/src/apricot/agent/runtime.py) & [`src/apricot/agent/state.py`](file:///C:/Users/hp/Desktop/PAPERS/neuropole/apricot-neo/src/apricot/agent/state.py). |
+| **CI / CD Pipelines** | Working | [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) matrix workflow across Python 3.10–3.13. |
+| **LLM Provider Abstraction** | Working | [`src/apricot/models/base.py`](../src/apricot/models/base.py) & [`src/apricot/models/groq.py`](../src/apricot/models/groq.py). |
+| **Tool System & Registry** | Working | [`src/apricot/tools/base.py`](../src/apricot/tools/base.py) (`BaseTool`, `FunctionTool`, `ToolRegistry`, `ToolResult`). |
+| **Agent Runtime Loop & State** | Working | [`src/apricot/agent/runtime.py`](../src/apricot/agent/runtime.py) & [`src/apricot/agent/state.py`](../src/apricot/agent/state.py). |
 | **Repository Brain / Indexing** | **Does Not Exist** | No AST parsing, graph generation, or ChromaDB indexing logic implemented yet. |
 | **Built-in Repository & Git Tools** | **Working** | Root-scoped repository tools (`list_files`, `read_file`, `search_text`, `search_code`) and safe no-shell Git tools (`git_status`, `git_diff`, `git_log`, `git_show`) with bounded output and failure handling. |
 | **GitHub Integration / Webhooks** | **Does Not Exist** | No GitHub App, webhook endpoints, or PyGithub API wrappers written yet. |
