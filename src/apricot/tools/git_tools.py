@@ -199,9 +199,9 @@ class GitDiffTool(GitToolBase):
         if max_bytes <= 0:
             return ToolResult.failure(error="max_bytes must be greater than zero")
 
-        args = ["diff"]
+        args = ["diff", "--no-ext-diff", "--no-textconv"]
         if staged:
-            args = ["diff", "--cached"]
+            args = ["diff", "--cached", "--no-ext-diff", "--no-textconv"]
         if path:
             args.extend(["--", path])
 
@@ -323,7 +323,10 @@ class GitShowTool(GitToolBase):
         if max_bytes <= 0:
             return ToolResult.failure(error="max_bytes must be greater than zero")
 
-        run_res = self._run_git(["show", rev, "--"], max_output_bytes=max_bytes)
+        run_res = self._run_git(
+            ["show", "--no-ext-diff", "--no-textconv", rev, "--"],
+            max_output_bytes=max_bytes,
+        )
         return self._build_result("git_show", run_res, extra_payload={"rev": rev})
 
 

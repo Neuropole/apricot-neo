@@ -33,6 +33,8 @@ class GroqProvider(BaseProvider):
         api_key: str | None = None,
         default_model: str = DEFAULT_MODEL,
         client: Groq | None = None,
+        timeout: float | None = None,
+        max_retries: int | None = None,
     ) -> None:
         """Initialize the Groq provider.
 
@@ -40,6 +42,8 @@ class GroqProvider(BaseProvider):
             api_key: Optional API key. If not provided, reads from GROQ_API_KEY environment.
             default_model: Default Groq model identifier to use when none is specified.
             client: Optional pre-configured Groq client (primarily for testing/mocking).
+            timeout: Optional HTTP request timeout in seconds.
+            max_retries: Optional maximum number of retry attempts for failed requests.
 
         Raises:
             ModelConfigError: If no API key is supplied or found in the environment.
@@ -61,7 +65,13 @@ class GroqProvider(BaseProvider):
                 "or set the GROQ_API_KEY environment variable in your .env file."
             )
 
-        self._client = Groq(api_key=resolved_key)
+        client_kwargs: dict[str, Any] = {"api_key": resolved_key}
+        if timeout is not None:
+            client_kwargs["timeout"] = timeout
+        if max_retries is not None:
+            client_kwargs["max_retries"] = max_retries
+
+        self._client = Groq(**client_kwargs)
 
     def _convert_message(self, message: Message) -> dict[str, Any]:
         """Convert a generic Message instance into Groq-compatible message dictionary."""
@@ -96,9 +106,11 @@ class GroqProvider(BaseProvider):
             return payload
 
         if role_str == Role.TOOL.value:
+            if not message.tool_call_id:
+                raise ValueError("Tool message must have a non-empty 'tool_call_id'")
             tool_payload: dict[str, Any] = {
                 "role": "tool",
-                "tool_call_id": message.tool_call_id or "",
+                "tool_call_id": message.tool_call_id,
                 "content": message.content or "",
             }
             if message.name:
@@ -146,7 +158,11 @@ class GroqProvider(BaseProvider):
             ModelAPIError: If the Groq API call fails.
             ModelResponseError: If the response is malformed.
         """
-        groq_messages = [self._convert_message(m) for m in messages]
+        try:
+            groq_messages = [self._convert_message(m) for m in messages]
+        except ValueError as exc:
+            raise ModelResponseError(f"Invalid message format: {exc}") from exc
+
         chosen_model = model or self.default_model
 
         kwargs: dict[str, Any] = {
@@ -198,5 +214,5 @@ class GroqProvider(BaseProvider):
                 usage=usage,
                 model=raw_response.model,
             )
-        except (IndexError, AttributeError, ValueError) as exc:
+        except (IndexError, AttributeError, ValueError, TypeError) as exc:
             raise ModelResponseError(f"Malformed response from Groq API: {exc}") from exc
