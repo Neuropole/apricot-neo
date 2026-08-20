@@ -26,7 +26,7 @@ gantt
 | :--- | :--- | :--- | :--- |
 | **Phase 0** | Baseline & Cleanup | **COMPLETED** | Repository setup, packaging, CI/CD, documentation baseline. |
 | **Phase 1** | Agent Runtime | **COMPLETED** | Completion of Phase 0 baseline & packaging. |
-| **Phase 2** | Repository Brain | **PLANNED** | Phase 1 (tool interface & execution loop). |
+| **Phase 2** | Repository Brain | **ACTIVE** | Phase 1 (tool interface & execution loop). |
 | **Phase 3** | Planner | **PLANNED** | Phase 1 (runtime) & Phase 2 (repository queries). |
 | **Phase 4** | Autonomous Implementation | **PLANNED** | Phase 3 (planning & hypothesis testing). |
 | **Phase 5** | High-Quality Code Review | **PLANNED** | Phase 2 (graph/AST) & Phase 3 (evidence engine). |

@@ -17,7 +17,7 @@ To quickly get up to speed, read the documentation files in the following order:
 1. [**`CURRENT_STATE.md`**](CURRENT_STATE.md): Understand what exists today versus what is planned.
 2. [**`ARCHITECTURE.md`**](ARCHITECTURE.md): Learn the current baseline and target system architecture.
 3. [**`REPOSITORY_MAP.md`**](REPOSITORY_MAP.md): Navigate existing files and planned source modules.
-4. [**`AGENT_RUNTIME.md`**](AGENT_RUNTIME.md): Review the planned Phase 1 agent runtime specification.
+4. [**`AGENT_RUNTIME.md`**](AGENT_RUNTIME.md): Review the Phase 1 agent runtime implementation and design specifications.
 5. [**`DEVELOPMENT.md`**](DEVELOPMENT.md): Learn environment setup and development guidelines.
 6. [**`DECISIONS.md`**](DECISIONS.md): Review accepted ADRs and pending design decisions.
 7. [**`ROADMAP.md`**](ROADMAP.md): View the phased delivery schedule from Phase 0 to Phase 8.
