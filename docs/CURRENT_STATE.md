@@ -2,9 +2,9 @@
 
 ## 1. Executive Summary
 
-Apricot Neo has **completed Phase 0 (Baseline & Foundation)**. The repository contains a standard `pyproject.toml` packaging setup, `uv.lock`, minimal package skeleton in `src/apricot/`, smoke test suite in `tests/`, strict quality gates (`ruff`, `mypy`), environment template (`.env.example`), and CI automation (`.github/workflows/ci.yml`). 
+Apricot Neo has **completed Phase 1 (Agent Runtime)**, including Phase 1.3 repository and Git inspection tools. The repository contains a standard `pyproject.toml` packaging setup, `uv.lock`, package code in `src/apricot/`, tests in `tests/`, strict quality gates (`ruff`, `mypy`), environment template (`.env.example`), and CI automation (`.github/workflows/ci.yml`).
 
-The project is now entering **Phase 1: Agent Runtime**.
+The project is now ready for **Phase 2: Repository Brain**.
 
 ---
 
@@ -12,43 +12,43 @@ The project is now entering **Phase 1: Agent Runtime**.
 
 | System / Capability | Status | Evidence / Notes |
 | :--- | :--- | :--- |
-| **Dependency Declarations & Locking** | Working | [`pyproject.toml`](file:///C:/Users/hp/Desktop/PAPERS/neuropole/apricot-neo/pyproject.toml) and [`uv.lock`](file:///C:/Users/hp/Desktop/PAPERS/neuropole/apricot-neo/uv.lock) define and lock all runtime and dev dependencies. |
-| **Git Configuration** | Working | [`.gitignore`](file:///C:/Users/hp/Desktop/PAPERS/neuropole/apricot-neo/.gitignore) ignores standard Python artifacts, virtual environments, caches (`.mypy_cache`, `.ruff_cache`, `.pytest_cache`), and vector DBs. |
-| **Environment Configuration** | Working | [`.env.example`](file:///C:/Users/hp/Desktop/PAPERS/neuropole/apricot-neo/.env.example) template provided. |
-| **Test Suite / Automation** | Working (Smoke) | [`tests/test_smoke.py`](file:///C:/Users/hp/Desktop/PAPERS/neuropole/apricot-neo/tests/test_smoke.py) configured with `pytest`. |
-| **Linting & Type Checking** | Working | `ruff` and `mypy` (strict) configured in `pyproject.toml`. |
-| **CI / CD Pipelines** | Working | [`.github/workflows/ci.yml`](file:///C:/Users/hp/Desktop/PAPERS/neuropole/apricot-neo/.github/workflows/ci.yml) matrix workflow across Python 3.10–3.13 with `uv`. |
-| **Package Structure** | Working (Skeleton) | `src/apricot/` initialized with minimal subpackage modules. |
-| **Documentation & Vision** | Working | [`docs/`](file:///C:/Users/hp/Desktop/PAPERS/neuropole/apricot-neo/docs/) contains comprehensive architectural, roadmap, and state guides. |
-| **Agent Runtime & Execution Loop** | **Does Not Exist** | No runtime execution loop or ReAct logic implemented yet. |
-| **LLM Provider Abstraction** | **Does Not Exist** | Base models and provider implementations not yet created. |
-| **Repository Brain / Indexing** | **Does Not Exist** | No AST parsing, graph generation, or ChromaDB indexing logic implemented. |
-| **Tool Registry & Execution** | **Does Not Exist** | No tool definitions (file read/write, bash execution, git tools) present. |
-| **GitHub Integration / Webhooks** | **Does Not Exist** | No GitHub App, webhook endpoints, or PyGithub API wrappers written. |
-| **CLI / Interface** | **Does Not Exist** | No CLI scripts (e.g. using `click` or `rich`) created. |
+| **Dependency Declarations & Locking** | Working | [`pyproject.toml`](../pyproject.toml) and [`uv.lock`](../uv.lock) define and lock all runtime and dev dependencies. |
+| **Git Configuration** | Working | [`.gitignore`](../.gitignore) ignores standard Python artifacts, virtual environments, caches, and vector DBs. |
+| **Environment Configuration** | Working | [`.env.example`](../.env.example) template provided. |
+| **Test Suite / Automation** | Working | Unit tests in `tests/unit/` and smoke tests in `tests/` passing under `pytest`. |
+| **Linting & Type Checking** | Working | `ruff` and `mypy` (strict) passing with zero errors. |
+| **CI / CD Pipelines** | Working | [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) matrix workflow across Python 3.10–3.13. |
+| **LLM Provider Abstraction** | Working | [`src/apricot/models/base.py`](../src/apricot/models/base.py) & [`src/apricot/models/groq.py`](../src/apricot/models/groq.py). |
+| **Tool System & Registry** | Working | [`src/apricot/tools/base.py`](../src/apricot/tools/base.py) (`BaseTool`, `FunctionTool`, `ToolRegistry`, `ToolResult`). |
+| **Agent Runtime Loop & State** | Working | [`src/apricot/agent/runtime.py`](../src/apricot/agent/runtime.py) & [`src/apricot/agent/state.py`](../src/apricot/agent/state.py). |
+| **Repository Brain / Indexing** | **Does Not Exist** | No AST parsing, graph generation, or ChromaDB indexing logic implemented yet. |
+| **Built-in Repository & Git Tools** | **Working** | Root-scoped repository tools (`list_files`, `read_file`, `search_text`, `search_code`) and safe no-shell Git tools (`git_status`, `git_diff`, `git_log`, `git_show`) with bounded output and failure handling. |
+| **GitHub Integration / Webhooks** | **Does Not Exist** | No GitHub App, webhook endpoints, or PyGithub API wrappers written yet. |
+| **CLI / Interface** | **Does Not Exist** | No CLI scripts (e.g. using `click` or `rich`) created yet. |
 
 ---
 
 ## 3. What Currently Works
 * **Python Packaging & Locking:** Standard `pyproject.toml` managed with `uv` (`uv.lock`).
-* **Environment Template:** [`.env.example`](file:///C:/Users/hp/Desktop/PAPERS/neuropole/apricot-neo/.env.example) defines standard environment variables.
-* **Test & Quality Gates:** `pytest`, `ruff`, and `mypy` running with zero errors.
-* **Continuous Integration:** GitHub Actions matrix CI (`.github/workflows/ci.yml`).
+* **Model Abstraction:** Universal message models, provider interface, and `GroqProvider` with tool-calling support.
+* **Tool Registry:** Tool registration, validation, schema generation, and safe execution dispatch.
+* **Agent Runtime Loop:** Model -> Tool -> Execution -> Model iteration loop with state tracking, error resilience, and step limits.
+* **Test & Quality Gates:** 33 unit and smoke tests passing under `pytest`, strict `mypy`, and `ruff`.
 
 ---
 
 ## 4. What Partially Works
-* **Package Skeleton:** `src/apricot/` contains module skeletons (`agent/`, `tools/`, `repository/`, `models/`, `github/`, `config/`, `utils/`), but no business logic.
+* **Agent Capabilities:** The core agent loop and tool dispatch work with real repository + Git inspection tools. Execution tools (`run_command`, `run_tests`, `run_linter`, etc.) and write tools (`write_file`) are not implemented yet.
 
 ---
 
 ## 5. What Does Not Exist
-* **No Agent Runtime:** No core loop, prompt templates, context manager, or execution tools.
+* **No Write/Execution Tools:** `write_file`, command execution (`run_command`), and other runtime execution helpers are not implemented yet.
 * **No Repository Brain:** No code parser, relationship graph, or ChromaDB vector store wrapper.
 * **No Planner:** No reasoning, replanning, or specialized investigator agents.
 * **No Review / Implementation Engine:** No diff generation, autonomous editing, or self-review engine.
 * **No GitHub Integration:** No bot identity, webhook handlers, or PR automation.
-* **No Web UI or API:** No frontend dashboard, API server, or background task queue.
+* **No Web UI or CLI:** No user-facing CLI or web interface yet.
 
 ---
 

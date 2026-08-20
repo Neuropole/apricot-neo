@@ -2,17 +2,20 @@
 
 ## 1. Current Implementation Status
 
-> [!WARNING]
-> **Current Status: NOT YET IMPLEMENTED**  
-> There is currently **no active agent runtime, prompt engine, or LLM execution loop** in the repository.
+> [!NOTE]
+> **Current Status: PHASE 1 COMPLETE (Phase 1.1, 1.2 & 1.3 Complete)**  
+> The core provider abstraction ([`src/apricot/models/`](../src/apricot/models/)), tool registry & contracts ([`src/apricot/tools/`](../src/apricot/tools/)), and ReAct agent loop with execution audit state ([`src/apricot/agent/`](../src/apricot/agent/)) are implemented and tested.
 
-The repository currently only defines dependencies associated with an LLM agent ([`groq`](file:///C:/Users/hp/Desktop/PAPERS/neuropole/apricot-neo/requirements.txt#L9), [`click`](file:///C:/Users/hp/Desktop/PAPERS/neuropole/apricot-neo/requirements.txt#L4), [`rich`](file:///C:/Users/hp/Desktop/PAPERS/neuropole/apricot-neo/requirements.txt#L5), [`python-dotenv`](file:///C:/Users/hp/Desktop/PAPERS/neuropole/apricot-neo/requirements.txt#L3)), but contains zero Python source code.
+The agent runtime features:
+* **Universal Provider Interface:** Abstract `BaseProvider` with `GroqProvider` supporting function calling and structured messages.
+* **Tool Abstraction:** `BaseTool`, `FunctionTool`, and `ToolRegistry` with duplicate protection, JSON schema generation, and safe execution dispatch.
+* **ReAct Agent Loop:** `Agent` executes multi-step model → tool → model interactions with max-iteration guards, error resilience, and durable state tracking via `AgentState`.
 
 ---
 
 ## 2. Intended Phase 1 Agent Runtime Design
 
-As specified in the Apricot 2.0 master plan ([`docs/neo-aprct-context.md`](file:///C:/Users/hp/Desktop/PAPERS/neuropole/apricot-neo/docs/neo-aprct-context.md)), the Phase 1 deliverable is a functional, testable local agent runtime.
+As specified in the Apricot 2.0 master plan ([`docs/neo-aprct-context.md`](neo-aprct-context.md)), the Phase 1 deliverable is a functional, testable local agent runtime.
 
 ### 2.1 Core Agent Loop (ReAct Style)
 
@@ -51,8 +54,8 @@ sequenceDiagram
 2. **Tool Registry & Execution Subsystem:**
    * Strict parameter validation and schema generation.
    * Standardized tool categories:
-     * **Filesystem Tools:** `read_file`, `write_file`, `list_directory`, `file_search`.
-     * **Git Tools:** `git_status`, `git_diff`, `git_log`, `git_blame`.
+     * **Repository Tools:** `list_files`, `read_file`, `search_text`, `search_code`, scoped strictly to an explicit repository root with traversal protection and exclusions.
+     * **Git Tools:** `git_status`, `git_diff`, `git_log`, `git_show`, using captured no-shell subprocesses.
      * **Execution Tools:** `run_command`, `run_tests` (with timeout and output truncation guards).
 
 3. **Context Budgeting & Management:**

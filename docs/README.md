@@ -14,14 +14,14 @@ Apricot Neo is an evolving repository-native autonomous GitHub software engineer
 
 To quickly get up to speed, read the documentation files in the following order:
 
-1. [**`CURRENT_STATE.md`**](file:///C:/Users/hp/Desktop/PAPERS/neuropole/apricot-neo/docs/CURRENT_STATE.md): Understand what exists today versus what is planned.
-2. [**`ARCHITECTURE.md`**](file:///C:/Users/hp/Desktop/PAPERS/neuropole/apricot-neo/docs/ARCHITECTURE.md): Learn the current baseline and target system architecture.
-3. [**`REPOSITORY_MAP.md`**](file:///C:/Users/hp/Desktop/PAPERS/neuropole/apricot-neo/docs/REPOSITORY_MAP.md): Navigate existing files and planned source modules.
-4. [**`AGENT_RUNTIME.md`**](file:///C:/Users/hp/Desktop/PAPERS/neuropole/apricot-neo/docs/AGENT_RUNTIME.md): Review the planned Phase 1 agent runtime specification.
-5. [**`DEVELOPMENT.md`**](file:///C:/Users/hp/Desktop/PAPERS/neuropole/apricot-neo/docs/DEVELOPMENT.md): Learn environment setup and development guidelines.
-6. [**`DECISIONS.md`**](file:///C:/Users/hp/Desktop/PAPERS/neuropole/apricot-neo/docs/DECISIONS.md): Review accepted ADRs and pending design decisions.
-7. [**`ROADMAP.md`**](file:///C:/Users/hp/Desktop/PAPERS/neuropole/apricot-neo/docs/ROADMAP.md): View the phased delivery schedule from Phase 0 to Phase 8.
-8. [**`neo-aprct-context.md`**](file:///C:/Users/hp/Desktop/PAPERS/neuropole/apricot-neo/docs/neo-aprct-context.md): Consult the original master plan for deeper product vision and design principles.
+1. [**`CURRENT_STATE.md`**](CURRENT_STATE.md): Understand what exists today versus what is planned.
+2. [**`ARCHITECTURE.md`**](ARCHITECTURE.md): Learn the current baseline and target system architecture.
+3. [**`REPOSITORY_MAP.md`**](REPOSITORY_MAP.md): Navigate existing files and planned source modules.
+4. [**`AGENT_RUNTIME.md`**](AGENT_RUNTIME.md): Review the Phase 1 agent runtime implementation and design specifications.
+5. [**`DEVELOPMENT.md`**](DEVELOPMENT.md): Learn environment setup and development guidelines.
+6. [**`DECISIONS.md`**](DECISIONS.md): Review accepted ADRs and pending design decisions.
+7. [**`ROADMAP.md`**](ROADMAP.md): View the phased delivery schedule from Phase 0 to Phase 8.
+8. [**`neo-aprct-context.md`**](neo-aprct-context.md): Consult the original master plan for deeper product vision and design principles.
 
 ---
 
@@ -29,10 +29,10 @@ To quickly get up to speed, read the documentation files in the following order:
 
 When discrepancies arise between documents, follow this hierarchy:
 1. **Repository Reality / Codebase Files**: What is physically in the repo is absolute truth.
-2. [**`CURRENT_STATE.md`**](file:///C:/Users/hp/Desktop/PAPERS/neuropole/apricot-neo/docs/CURRENT_STATE.md): Truth on implementation completeness.
-3. [**`ARCHITECTURE.md`**](file:///C:/Users/hp/Desktop/PAPERS/neuropole/apricot-neo/docs/ARCHITECTURE.md) & [**`DECISIONS.md`**](file:///C:/Users/hp/Desktop/PAPERS/neuropole/apricot-neo/docs/DECISIONS.md): Architectural contracts and records.
-4. [**`ROADMAP.md`**](file:///C:/Users/hp/Desktop/PAPERS/neuropole/apricot-neo/docs/ROADMAP.md): Phase planning and prerequisites.
-5. [**`neo-aprct-context.md`**](file:///C:/Users/hp/Desktop/PAPERS/neuropole/apricot-neo/docs/neo-aprct-context.md): High-level product vision and inspiration.
+2. [**`CURRENT_STATE.md`**](CURRENT_STATE.md): Truth on implementation completeness.
+3. [**`ARCHITECTURE.md`**](ARCHITECTURE.md) & [**`DECISIONS.md`**](DECISIONS.md): Architectural contracts and records.
+4. [**`ROADMAP.md`**](ROADMAP.md): Phase planning and prerequisites.
+5. [**`neo-aprct-context.md`**](neo-aprct-context.md): High-level product vision and inspiration.
 
 ---
 
@@ -52,37 +52,37 @@ APRICOT NEO AGENT HANDOFF
 ================================================================================
 
 CURRENT SYSTEM:
-- Phase 0 foundation complete.
-- Packaging configured via pyproject.toml with dependencies locked in uv.lock.
-- Clean package skeleton in src/apricot/ with subpackages (agent/, tools/, repository/, models/, github/, config/, utils/).
-- Test suite configured (pytest) with smoke tests passing.
-- Quality gates configured (ruff, strict mypy).
-- Matrix CI workflow setup in .github/workflows/ci.yml and environment template in .env.example.
+- Phase 0 foundation complete (pyproject.toml, uv.lock, CI matrix, .env.example).
+- Phase 1.1 Model Abstraction complete (BaseProvider, GroqProvider, universal Message/ToolCall/ModelResponse).
+- Phase 1.2 Agent Runtime Foundation complete (BaseTool, FunctionTool, ToolRegistry, Agent ReAct loop, AgentState, AgentResult).
+- Phase 1.3 Built-in Coding Tools complete (repository + git inspection tools).
+- Comprehensive test suite (45+ tests in tests/unit/ and tests/test_smoke.py) passing under pytest, ruff, and strict mypy.
 
 KNOWN GAPS:
-- No Agent Runtime implementation (no LLM loop, tool registry, or provider interface).
 - No Repository Brain implementation (no AST parsing, symbol indexing, or ChromaDB vector store).
 - No Planner or specialized investigator agents.
 - No CLI or web interfaces.
 
 IMPORTANT FILES:
+- src/apricot/agent/runtime.py: Agent ReAct execution loop.
+- src/apricot/agent/state.py: AgentState, AgentResult, StepRecord.
+- src/apricot/tools/base.py: BaseTool, FunctionTool, ToolRegistry, ToolResult.
+- src/apricot/tools/repository_tools.py: list_files/read_file/search_text/search_code with repo sandboxing.
+- src/apricot/tools/git_tools.py: git_status/git_diff/git_log/git_show with safe subprocess handling.
+- src/apricot/models/base.py: BaseProvider, Message, ToolCall, ModelResponse.
+- src/apricot/models/groq.py: GroqProvider implementation.
 - pyproject.toml: Packaging metadata, dependency specs, and tool configs.
 - uv.lock: Deterministic dependency lockfile.
-- src/apricot/: Root package tree and namespace skeletons.
-- tests/test_smoke.py: Smoke test suite.
-- .github/workflows/ci.yml: Matrix CI workflow.
-- .env.example: Environment variable template.
-- docs/neo-aprct-context.md: Product master plan.
+- tests/unit/: Unit test suite (test_agent.py, test_models.py, test_tools.py, test_repository_git_tools.py).
 - docs/CURRENT_STATE.md: Exact capability audit.
 - docs/ARCHITECTURE.md: Target architecture blueprints.
-- docs/DECISIONS.md: Recorded ADRs and pending choices.
 - docs/ROADMAP.md: Phased implementation guide.
 
 CURRENT PHASE:
-- Phase 1: Agent Runtime.
+- Phase 2: Repository Brain (Active).
 
 NEXT RECOMMENDED TASK:
-- Phase 1.1: LLM Provider Abstraction & Client (src/apricot/models/base.py and initial GroqProvider implementation with tests).
+- Phase 2: Repository Brain (AST/symbol extraction, indexing, and relationship graph).
 
 UNRESOLVED DECISIONS:
 - Selection of Python build backend / packaging standard (e.g. pyproject.toml with flit/hatchling/setuptools).
