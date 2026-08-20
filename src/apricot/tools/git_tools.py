@@ -67,13 +67,19 @@ class GitToolBase(BaseTool):
 
         # Truncate to keep ToolResult payload size manageable.
         if len(stdout.encode("utf-8", errors="replace")) > max_output_bytes:
-            stdout = stdout.encode("utf-8", errors="replace")[:max_output_bytes].decode(
-                "utf-8", errors="replace"
-            ) + "\n…(truncated)…"
+            stdout = (
+                stdout.encode("utf-8", errors="replace")[:max_output_bytes].decode(
+                    "utf-8", errors="replace"
+                )
+                + "\n…(truncated)…"
+            )
         if len(stderr.encode("utf-8", errors="replace")) > max_output_bytes:
-            stderr = stderr.encode("utf-8", errors="replace")[:max_output_bytes].decode(
-                "utf-8", errors="replace"
-            ) + "\n…(truncated)…"
+            stderr = (
+                stderr.encode("utf-8", errors="replace")[:max_output_bytes].decode(
+                    "utf-8", errors="replace"
+                )
+                + "\n…(truncated)…"
+            )
 
         return _GitRunResult(exit_code=proc.returncode, stdout=stdout, stderr=stderr)
 
