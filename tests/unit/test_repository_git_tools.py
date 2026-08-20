@@ -35,12 +35,16 @@ def _require_git() -> None:
 
 
 def _init_git_repo(repo: Path) -> None:
-    proc = _run(["git", "init"], cwd=repo)
+    proc = _run(["git", "init", "-b", "main"], cwd=repo)
+    if proc.returncode != 0:
+        proc = _run(["git", "init"], cwd=repo)
     assert proc.returncode == 0, f"git init failed: {proc.stderr}"
 
-    # Local commit identity so `git commit` works in CI/test environments.
+    # Local commit identity and settings so `git commit` works cleanly in CI/test environments.
     _run(["git", "config", "user.email", "test@example.com"], cwd=repo).check_returncode()
     _run(["git", "config", "user.name", "Test User"], cwd=repo).check_returncode()
+    _run(["git", "config", "commit.gpgsign", "false"], cwd=repo).check_returncode()
+    _run(["git", "config", "core.hooksPath", ""], cwd=repo).check_returncode()
 
 
 @pytest.fixture()
@@ -50,6 +54,7 @@ def repo_with_files(tmp_path: Path) -> Path:
 
     (repo / "src").mkdir()
     (repo / "docs").mkdir()
+    (repo / ".github" / "workflows").mkdir(parents=True)
     (repo / "__pycache__").mkdir()
     (repo / ".git").mkdir()
 
@@ -59,6 +64,8 @@ def repo_with_files(tmp_path: Path) -> Path:
     )
     (repo / "README.md").write_text("hello world\n", encoding="utf-8")
     (repo / "docs" / "note.txt").write_text("this contains needle\n", encoding="utf-8")
+    (repo / ".github" / "workflows" / "ci.yml").write_text("name: CI\n", encoding="utf-8")
+    (repo / ".env").write_text("SECRET_KEY=12345\n", encoding="utf-8")
 
     # Excluded dir content.
     (repo / ".git" / "secret.txt").write_text("should not show up\n", encoding="utf-8")
@@ -82,15 +89,23 @@ def test_list_files_and_read_file(repo_with_files: Path) -> None:
     assert "src/example.py" in paths
     assert "README.md" in paths
     assert "docs/note.txt" in paths
+    assert ".github/workflows/ci.yml" in paths
     assert "bin.dat" in paths
-    assert "secret.txt" not in " ".join(paths)
-    assert "bin.dat" in paths
+    # Excluded items
+    assert ".env" not in paths
+    assert not any(p == ".git" or p.startswith(".git/") or "/.git/" in p for p in paths)
+    assert not any("secret.txt" in p for p in paths)
 
     read_tool = ReadFileTool(repo_root=repo_with_files)
     read_res = read_tool.execute(path="src/example.py", max_bytes=10_000)
     assert read_res.success is True
     read_payload: dict[str, Any] = json.loads(read_res.output)
     assert "def add" in read_payload["content"]
+
+    # Test reading dot-directory file
+    read_ci = read_tool.execute(path=".github/workflows/ci.yml")
+    assert read_ci.success is True
+    assert "name: CI" in json.loads(read_ci.output)["content"]
 
 
 def test_path_traversal_is_rejected(repo_with_files: Path, tmp_path: Path) -> None:
@@ -129,6 +144,7 @@ def test_read_file_binary_rejected(repo_with_files: Path) -> None:
 def test_excluded_paths_and_invalid_limits_are_rejected(repo_with_files: Path) -> None:
     read_tool = ReadFileTool(repo_root=repo_with_files)
     assert not read_tool.execute(path=".git/secret.txt").success
+    assert not read_tool.execute(path=".env").success
 
     list_tool = ListFilesTool(repo_root=repo_with_files)
     assert not list_tool.execute(path=".git").success
@@ -146,6 +162,13 @@ def test_search_text_finds_substring(repo_with_files: Path) -> None:
     matches: list[dict[str, Any]] = payload["matches"]
     assert any(m["path"] == "docs/note.txt" for m in matches)
 
+    # Search in dot-directory
+    res_ci = tool.execute(query="name: CI", path=".github")
+    assert res_ci.success is True
+    assert any(
+        m["path"] == ".github/workflows/ci.yml" for m in json.loads(res_ci.output)["matches"]
+    )
+
 
 def test_search_code_finds_code_only(repo_with_files: Path) -> None:
     tool = SearchCodeTool(repo_root=repo_with_files)
@@ -154,6 +177,26 @@ def test_search_code_finds_code_only(repo_with_files: Path) -> None:
     payload: dict[str, Any] = json.loads(res.output)
     matches: list[dict[str, Any]] = payload["matches"]
     assert any(m["path"] == "src/example.py" for m in matches)
+
+
+def test_search_code_regex_support(repo_with_files: Path) -> None:
+    tool = SearchCodeTool(repo_root=repo_with_files)
+
+    # Valid regex
+    res = tool.execute(query=r"def\s+add\(a,\s*b\):", use_regex=True)
+    assert res.success is True
+    payload: dict[str, Any] = json.loads(res.output)
+    assert any(m["path"] == "src/example.py" for m in payload["matches"])
+
+    # Invalid regex pattern
+    res_invalid = tool.execute(query=r"[invalid", use_regex=True)
+    assert res_invalid.success is False
+    assert "Invalid regex" in str(res_invalid.error)
+
+    # Regex query exceeding max length
+    res_long = tool.execute(query="a" * 501, use_regex=True)
+    assert res_long.success is False
+    assert "maximum length" in str(res_long.error)
 
 
 def test_search_rejects_empty_query(repo_with_files: Path) -> None:
@@ -195,10 +238,6 @@ def test_git_tools_happy_path(tmp_path: Path) -> None:
     # Uncommitted change to produce diffs + status.
     (repo / "README.md").write_text("initial\nsecond\nuncommitted change\n", encoding="utf-8")
 
-    head = _run(["git", "rev-parse", "HEAD"], cwd=repo)
-    assert head.returncode == 0
-    # HEAD hash is not required for assertions in this test.
-
     prev = _run(["git", "rev-parse", "HEAD~1"], cwd=repo)
     assert prev.returncode == 0
     prev_hash = prev.stdout.strip()
@@ -228,6 +267,25 @@ def test_git_tools_happy_path(tmp_path: Path) -> None:
     assert show_res.success is True
     show_payload: dict[str, Any] = json.loads(show_res.output)
     assert "initial commit" in show_payload["stdout"]
+
+
+def test_git_tools_parameter_validation(tmp_path: Path) -> None:
+    repo = tmp_path / "valid_repo"
+    repo.mkdir()
+
+    show_tool = GitShowTool(repo_root=repo)
+    # Revisions starting with - are rejected
+    assert show_tool.execute(rev="-p").success is False
+    assert show_tool.execute(rev="").success is False
+    assert show_tool.execute(rev="HEAD", max_bytes=0).success is False
+
+    diff_tool = GitDiffTool(repo_root=repo)
+    assert diff_tool.execute(max_bytes=0).success is False
+
+    log_tool = GitLogTool(repo_root=repo)
+    assert log_tool.execute(max_count=0).success is False
+    assert log_tool.execute(max_count=1001).success is False
+    assert log_tool.execute(max_bytes=-5).success is False
 
 
 def test_git_tools_failure_handling_for_non_git_dir(tmp_path: Path) -> None:

@@ -53,10 +53,13 @@ class TestModelBaseStructures:
         assert tc.arguments == {"path": "src/main.py", "lines": 10}
         assert tc.raw_arguments == raw_json
 
-        # Test with invalid JSON - should fallback to empty dict
-        tc_invalid = ToolCall.from_raw("call_2", "run_cmd", "invalid json")
-        assert tc_invalid.arguments == {}
-        assert tc_invalid.raw_arguments == "invalid json"
+        # Test with invalid JSON - should raise ValueError
+        with pytest.raises(ValueError, match="Invalid JSON"):
+            ToolCall.from_raw("call_2", "run_cmd", "invalid json")
+
+        # Test with valid JSON that is not an object - should raise ValueError
+        with pytest.raises(ValueError, match="must be a JSON object"):
+            ToolCall.from_raw("call_3", "run_cmd", '["not", "a", "dict"]')
 
     def test_model_response_and_conversion(self) -> None:
         """Test ModelResponse properties and conversion to assistant Message."""
@@ -298,6 +301,30 @@ class TestGroqProvider:
         mock_client = MagicMock()
         mock_raw_response = MagicMock()
         mock_raw_response.choices = []  # Empty choices list
+        mock_client.chat.completions.create.return_value = mock_raw_response
+
+        provider = GroqProvider(client=mock_client)
+        with pytest.raises(ModelResponseError, match="Malformed response from Groq API"):
+            provider.generate([Message.user("Hello")])
+
+    def test_generate_malformed_tool_call_arguments_handling(self) -> None:
+        """Verify malformed tool call arguments string raises ModelResponseError."""
+        mock_client = MagicMock()
+        mock_tc = MagicMock()
+        mock_tc.id = "call_bad"
+        mock_tc.function.name = "read_file"
+        mock_tc.function.arguments = "invalid json {{"
+
+        mock_raw_choice = MagicMock()
+        mock_raw_choice.message.content = None
+        mock_raw_choice.message.tool_calls = [mock_tc]
+        mock_raw_choice.finish_reason = "tool_calls"
+
+        mock_raw_response = MagicMock()
+        mock_raw_response.choices = [mock_raw_choice]
+        mock_raw_response.model = "llama-3.3-70b-versatile"
+        mock_raw_response.usage = None
+
         mock_client.chat.completions.create.return_value = mock_raw_response
 
         provider = GroqProvider(client=mock_client)
