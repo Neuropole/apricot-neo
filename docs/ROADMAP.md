@@ -1,6 +1,6 @@
 # Apricot Neo: Development Roadmap
 
-This roadmap maps the master product plan ([`docs/neo-aprct-context.md`](file:///C:/Users/hp/Desktop/PAPERS/neuropole/apricot-neo/docs/neo-aprct-context.md)) against the current codebase state.
+This roadmap maps the master product plan ([`docs/neo-aprct-context.md`](neo-aprct-context.md)) against the current codebase state.
 
 ---
 
@@ -12,8 +12,8 @@ gantt
     dateFormat  YYYY-MM-DD
     section Phases
     Phase 0: Baseline & Inception (Done)        :done, p0, 2026-08-01, 2026-08-18
-    Phase 1: Agent Runtime (Complete)           :done, p1, 2026-08-18, 30d
-    Phase 2: Repository Brain                   :p2, after p1, 30d
+    Phase 1: Agent Runtime (Complete)           :done, p1, 2026-08-18, 2026-08-20
+    Phase 2: Repository Brain (Active)          :active, p2, 2026-08-20, 30d
     Phase 3: Planner                            :p3, after p2, 25d
     Phase 4: Autonomous Implementation          :p4, after p3, 30d
     Phase 5: High-Quality Code Review           :p5, after p4, 25d
@@ -53,13 +53,13 @@ gantt
 
 ### Phase 1: Agent Runtime (COMPLETED)
 * **Objective:** Turn Apricot into a functional, local, tool-using coding agent.
-* **Target Deliverables:**
-  * Core agent ReAct iteration loop.
-  * Tool registry and base tool abstractions.
-  * Essential filesystem tools (`read_file`, `write_file`, `list_files`).
-  * Shell and test execution tools with output truncation guards.
-  * Git inspection tools (`git_status`, `git_diff`, `git_log`, `git_show`).
-  * LLM provider abstraction with `Groq` and `Ollama` integrations.
+* **Completed Deliverables:**
+  * Core agent ReAct iteration loop with `AgentState` and step limits.
+  * Tool registry and base tool abstractions (`BaseTool`, `FunctionTool`, `ToolRegistry`, `ToolResult`).
+  * Repository inspection tools (`list_files`, `read_file`, `search_text`, `search_code`) with sandboxing and exclusions.
+  * Git inspection tools (`git_status`, `git_diff`, `git_log`, `git_show`) with safe subprocess handling.
+  * Universal LLM provider abstraction with `GroqProvider` integration (Ollama deferred to Phase 2+).
+  * Write tools (`write_file`) and shell/test execution tools deferred to subsequent execution phases.
 * **Prerequisites:** Phase 0.
 
 #### Phase 1.3: Repository & Git Tools (COMPLETED)
