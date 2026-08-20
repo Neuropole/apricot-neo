@@ -101,15 +101,24 @@ class TestGroqProvider:
     ) -> None:
         """Verify ModelConfigError is raised when no API key is provided or found."""
         monkeypatch.delenv("GROQ_API_KEY", raising=False)
-        with pytest.raises(ModelConfigError, match="GROQ_API_KEY is not set"):
-            GroqProvider(api_key=None)
+        with patch("apricot.models.groq.load_dotenv"):
+            with pytest.raises(ModelConfigError, match="GROQ_API_KEY is not set"):
+                GroqProvider(api_key=None)
 
     def test_init_with_explicit_api_key(self) -> None:
         """Verify successful initialization when API key is explicitly passed."""
         with patch("apricot.models.groq.Groq") as mock_groq_cls:
-            provider = GroqProvider(api_key="gsk_test_key_123")
+            provider = GroqProvider(
+                api_key="gsk_test_key_123",
+                timeout=30.0,
+                max_retries=3,
+            )
             assert provider.default_model == "llama-3.3-70b-versatile"
-            mock_groq_cls.assert_called_once_with(api_key="gsk_test_key_123")
+            mock_groq_cls.assert_called_once_with(
+                api_key="gsk_test_key_123",
+                timeout=30.0,
+                max_retries=3,
+            )
 
     def test_generate_text_response(self) -> None:
         """Test standard text generation with mocked Groq client."""
@@ -330,3 +339,23 @@ class TestGroqProvider:
         provider = GroqProvider(client=mock_client)
         with pytest.raises(ModelResponseError, match="Malformed response from Groq API"):
             provider.generate([Message.user("Hello")])
+
+    def test_generate_malformed_response_type_error_handling(self) -> None:
+        """Verify non-indexable/None choices raises ModelResponseError."""
+        mock_client = MagicMock()
+        mock_raw_response = MagicMock()
+        mock_raw_response.choices = None  # None choices causes TypeError on indexing
+        mock_client.chat.completions.create.return_value = mock_raw_response
+
+        provider = GroqProvider(client=mock_client)
+        with pytest.raises(ModelResponseError, match="Malformed response from Groq API"):
+            provider.generate([Message.user("Hello")])
+
+    def test_generate_tool_message_missing_tool_call_id_raises(self) -> None:
+        """Verify tool message without tool_call_id raises ModelResponseError."""
+        mock_client = MagicMock()
+        provider = GroqProvider(client=mock_client)
+        bad_tool_msg = Message(role=Role.TOOL, content="result", tool_call_id="")
+
+        with pytest.raises(ModelResponseError, match="Invalid message format"):
+            provider.generate([bad_tool_msg])
